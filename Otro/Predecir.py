@@ -52,6 +52,7 @@ def extraer_keypoints(video_path):
             break
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(image_rgb)
+
         if results.pose_landmarks:
             puntos = []
             for lm in results.pose_landmarks.landmark:
