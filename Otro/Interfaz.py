@@ -14,7 +14,7 @@ def interfazInicial():
     ruta_imagen = os.path.join(ruta_script, "pngwing.com.png")
     ruta_imagenCalendario = os.path.join(ruta_script, "calendarioWorkout.png")
 
-    ventana = ctk.CTk()
+    ventana = ctk.CTk(fg_color="#FFFFFF")  # Fondo oscuro
     ventana.title("Interfaz Secundaria")
     ventana.geometry("1000x800")
     ventana.columnconfigure(0, weight=1)
@@ -27,13 +27,13 @@ def interfazInicial():
 
     lbl_espacio = tk.Label(ventana, text="",width=25,height=10)
     lbl_espacio.grid(row=1, column=1, padx=10, pady=10)
-    
+
     frameTimer = ctk.CTkFrame(ventana, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameTimer.columnconfigure(0, weight=1)
     frameTimer.columnconfigure(1, weight=1)
     frameTimer.columnconfigure(2, weight=1)
     frameTimer.grid_propagate(False)
-    frameTimer.grid(row=2, column=0, padx=20, pady=20)
+    frameTimer.grid(row=3, column=0, padx=20, pady=20)
 
     lbl_timer = tk.Label(frameTimer, text="Tiempo", font=("Arial", 14, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_timer.grid(row=0, column=0, padx = 30,pady=(20,30),sticky="w")
@@ -62,9 +62,7 @@ def interfazInicial():
 
 
 
-    # Botón Iniciar Cámara (centro)
-    btn_camara = tk.Button(
-    ventana,
+    """ventana,
     text="Iniciar cámara",
     font=("Arial", 14, "bold"),
     bg="#222831",        # Fondo oscuro (como transparente en tema oscuro)
@@ -73,45 +71,60 @@ def interfazInicial():
     activeforeground="#00ADB5",  # Color del texto cuando haces clic
     borderwidth=0,       # Sin borde
     width=25,
-    height=10
-    )
-    btn_camara.grid(row=3, column=2, padx=10, pady=10)
+    height=
+    )"""
+
+    # Botón Iniciar Cámara (centro)
+    btn_camara =ctk.CTkButton(
+    ventana,
+    text="Iniciar cámara",
+    font=("Arial", 18, "bold"),
+    corner_radius=20,  # ¡Esto sí redondea!
+    fg_color="#00ADB5",
+    text_color="white",
+    width=250,
+    height=75
+    )   
+    btn_camara.grid(row=2, column=2, padx=10, pady=10)
 
     # Botón Entrenar Modelo (centro)
     btn_entrenar = ctk.CTkButton(
     ventana,
     text="Entrenar modelo",
+    font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=225
+    height=75
     )   
-    btn_entrenar.grid(row=3, column=0, pady=10)
+    btn_entrenar.grid(row=2, column=0, pady=10)
 
     # Botón Video Grabado (centro)
     btn_videoGuardado = ctk.CTkButton(
     ventana,
     text="Ingresar video grabado",
+    font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=225
+    height=75
     )   
-    btn_videoGuardado.grid(row=3, column=1, pady=10)
+    btn_videoGuardado.grid(row=2, column=1, pady=10)
 
     # Botón Cerrar (abajo izquierda)
     btn_cerrar = ctk.CTkButton(
     ventana,
     text="Cerrar",
+    font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
     fg_color="#00ADB5",
     text_color="white",
     width=25,
     height=10
     )   
-    btn_cerrar.grid(row=5, column=0, padx=10, pady=50, sticky="w")
+    btn_cerrar.grid(row=4, column=0, padx=10, pady=50, sticky="w")
 
     mostrar_hora()  # Iniciar la actualización de la hora
     ventana.mainloop()
