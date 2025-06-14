@@ -128,6 +128,8 @@ def evaluar_sentadilla(keypoints_cuerpo):
     min_cadera_y = 0  # Inicializar con un valor alto
     aux = 0
 
+    rodillas_ok = True
+
     profundidad_izquierda = False
     profundidad_derecha = False
 
@@ -140,6 +142,9 @@ def evaluar_sentadilla(keypoints_cuerpo):
         
         if anguloDerecho < 70 or anguloIzquierdo < 70:
             aux += 1
+
+        if rodillas_ok:
+            rodillas_ok = frame_kp["right_knee"][1] < frame_kp["right_ankle"][1] 
         
         angulosIzquierdo.append(anguloIzquierdo)
         angulosDerecho.append(anguloDerecho)
@@ -153,16 +158,21 @@ def evaluar_sentadilla(keypoints_cuerpo):
         angulosDerechoTorso.append(anguloDerechoTorso)
         angulosIzquierdoTorso.append(anguloIzquierdoTorso)
 
-    if frame_min["right_ankle"][1] > frame_min["right_knee"][1]:
-        profundidad_ok = True
-    else:
-        profundidad_ok = False
+    #profundidad_ok = frame_min["right_ankle"][1] > frame_min["right_knee"][1]
+    # Puntos
+    cadera = (frame_min["right_hip"][0], frame_min["right_hip"][1])
+    rodilla = (frame_min["right_knee"][0], frame_min["right_knee"][1])
+    tobillo = (frame_min["right_ankle"][0], frame_min["right_ankle"][1])
+
+    angulo_rodilla = calcular_angulo(cadera, rodilla, tobillo)
+
+    # Umbral común: < 90 grados = buena profundidad
+    profundidad_ok = angulo_rodilla < 90
 
     minimo_anguloDerecho = min(angulosDerecho)
     minimo_anguloIzquierdo = min(angulosIzquierdo)
 
     # Verificar si el ángulo mínimo es menor a 70 grados
-    rodillas_ok = minimo_anguloDerecho > 70 and minimo_anguloIzquierdo > 70
 
     angulo_promedioDerechoTorso = sum(angulosDerechoTorso) / len(angulosDerechoTorso)
     angulo_promedioIzquierdoTorso = sum(angulosIzquierdoTorso) / len(angulosIzquierdoTorso)
@@ -173,18 +183,23 @@ def evaluar_sentadilla(keypoints_cuerpo):
     print(frame_min["right_ankle"][1], frame_min["right_knee"][1])
 
     torso_ok = angulo_promedioDerechoTorso < 160 and angulo_promedioIzquierdoTorso < 160
-    print(aux)
+
+    zonaErorr = []
     if rodillas_ok and profundidad_ok and torso_ok:
-        return "✅ Sentadilla correcta"
+        return []
     else:
         errores = []
         if not rodillas_ok:
             errores.append("❌ Ángulo de rodilla incorrecto")
+            zonaErorr.append("left_knee")
         if not profundidad_ok:
             errores.append("❌ Baja más la cadera")
+            zonaErorr.append("right_hip")
         if not torso_ok:
             errores.append("❌ Mantén la espalda recta")
-        return " | ".join(errores)
+            zonaErorr.append("back")
+        print("Errores encontrados:", errores)
+        return zonaErorr
 
 if __name__ == "__main__":
     main()

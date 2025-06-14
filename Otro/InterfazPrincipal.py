@@ -313,8 +313,11 @@ def detectar_camaras():
     return indices
 
 def mostrar_camara():
-    global malo 
-    malo = False
+    global  marcas_error_global, nombre_ejercicio, zonaError
+    zonaError = []  # Lista para almacenar las zonas de error
+    nombre_ejercicio = "Desconocido"
+    #zonaError = []  # Lista para almacenar las zonas de error
+    marcas_error_global = []  # Lista para almacenar las marcas de error
     keypoints = []  # Lista para almacenar los keypoints
 
     cam_index = int(combo_camaras.get())
@@ -329,8 +332,7 @@ def mostrar_camara():
     lbl_video.pack()
 
     def actualizar_frame():
-        global malo
-        nombre_ejercicio = "Desconocido"
+        global marcas_error_global,nombre_ejercicio,zonaError
         keypoints_cuerpo = []
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
@@ -342,14 +344,12 @@ def mostrar_camara():
         results = pose.process(frame_rgb)
 
         if results.pose_landmarks:
-           # mp.solutions.drawing_utils.draw_landmarks(
+            #mp.solutions.drawing_utils.draw_landmarks(
             #    frame_rgb, results.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS
             #)
             # Obtener las coordenadas de la rodilla derecha
             altura, ancho, _ = frame.shape
             landmarks = results.pose_landmarks.landmark
-            rodilla_dx = int(landmarks[24].x * ancho)
-            rodilla_dy = int(landmarks[24].y * altura)
             # Extraer keypoints de los landmarks    
             puntos = []
             for lm in results.pose_landmarks.landmark:
@@ -359,20 +359,25 @@ def mostrar_camara():
             keypoints_cuerpo.append(keyCuerpo)
             keypoints.append(puntos)
 
+            if nombre_ejercicio == "squat":
+                marcas_error_global = veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+                for marca in marcas_error_global:
+                    if marca[0] == "punto":
+                        _, x, y = marca
+                        cv2.circle(frame_rgb, (x, y), 8, (0, 0, 255), -1)
+                    elif marca[0] == "linea":
+                        _, x1, y1, x2, y2 = marca
+                        cv2.line(frame_rgb, (x1, y1), (x2, y2), (0, 0, 255), 3)
+                        # cv2.circle(frame_rgb, (rodilla_dx, rodilla_dy), 10, (255, 0, 0), -1)  # rojo en BGR
+            
             if len(keypoints) == ventana_tamaño:
                 nombre_ejercicio = predecir_ejercicio(keypoints)
-
+                zonaError = evaluar_sentadilla(keypoints_cuerpo)
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
-                
-                if nombre_ejercicio == "squat":
-                    malo = True
-                    print("Ejercicio de sentadilla detectado.")
-                    print(evaluar_sentadilla(keypoints_cuerpo))
                 # Reiniciar ventana para siguiente predicción
                 keypoints.clear()
+                keypoints_cuerpo.clear()
             
-            if malo:
-                cv2.circle(frame_rgb, (rodilla_dx, rodilla_dy), 10, (255, 0, 0), -1)  # rojo en BGR
 
         img = Image.fromarray(frame_rgb)
         imgtk = ImageTk.PhotoImage(image=img)
@@ -381,6 +386,34 @@ def mostrar_camara():
         ventana_camara.after(10, actualizar_frame)
 
     actualizar_frame()
+
+def veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
+    marcas_error_global = []
+    if len(keypoints_cuerpo) == 0:
+        print("No se detectaron poses.")
+        return "Desconocido"
+    
+    if not zonaError:
+        print("No se detectaron errores en la sentadilla.")
+        return []
+    
+    if "left_knee" in zonaError:
+        rodilla_dx = int(landmarks[24].x * ancho)
+        rodilla_dy = int(landmarks[24].y * altura)
+        marcas_error_global.append(("punto", rodilla_dx,rodilla_dy ))
+    if "right_hip" in zonaError:
+        cadera_dx = int(landmarks[23].x * ancho)
+        cadera_dy = int(landmarks[23].y * altura)
+        marcas_error_global.append(("punto", cadera_dx, cadera_dy))
+    if "back" in zonaError:
+        hombro_dx = int(landmarks[12].x * ancho)
+        hombro_dy = int(landmarks[12].y * altura)
+
+        cadera_dx = int(landmarks[24].x * ancho)
+        cadera_dy = int(landmarks[24].y * altura)
+        marcas_error_global.append(("linea", cadera_dx, cadera_dy, hombro_dx, hombro_dy))
+    
+    return marcas_error_global
 
 def predecir_ejercicio(keypoints):
     if len(keypoints) == 0:
