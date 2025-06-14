@@ -4,9 +4,14 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 import os
 from PIL import Image
+from Conexion import conectar_bd
 
 def interfazInicial():
     global lbl_hora
+
+    nombreUsuario = "Irvin"
+    conexion = conectar_bd(nombreUsuario, "123")
+    
     # Obtener la ruta absoluta del script
     ruta_script = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,7 +33,7 @@ def interfazInicial():
     lbl_fotoSesion = ctk.CTkLabel(frameSesion, image=ImageTk.PhotoImage(imagen), text="")
     lbl_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-    lbl_datosSesion = ctk.CTkLabel(frameSesion, text="Hola: ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola: {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
     lbl_datosSesion.grid(row=0, column=1, pady=10, sticky="w")
     
     imagen = Image.open(os.path.join(ruta_script, "campanaWorkout.png"))
