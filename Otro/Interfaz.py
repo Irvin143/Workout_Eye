@@ -10,10 +10,6 @@ def interfazInicial():
     # Obtener la ruta absoluta del script
     ruta_script = os.path.dirname(os.path.abspath(__file__))
 
-    # Construir la ruta absoluta de la imagen
-    ruta_imagen = os.path.join(ruta_script, "pngwing.com.png")
-    ruta_imagenCalendario = os.path.join(ruta_script, "calendarioWorkout.png")
-
     ventana = ctk.CTk(fg_color="#FFFFFF")  # Fondo oscuro
     ventana.title("Interfaz Secundaria")
     ventana.geometry("1000x800")
@@ -21,11 +17,31 @@ def interfazInicial():
     ventana.columnconfigure(1, weight=1)
     ventana.columnconfigure(2, weight=1)
 
-    # Botón Iniciar Sesión (arriba izquierda)
-    btn_sesion = tk.Button(ventana, text="Iniciar sesión")
-    btn_sesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-    lbl_espacio = tk.Label(ventana, text="",width=25,height=10)
+    #Parte de arriba de la sesion
+    frameSesion = ctk.CTkFrame(ventana, corner_radius=20, height=100,fg_color="#c4d2f4")
+    frameSesion.columnconfigure(1, weight=1)
+    frameSesion.columnconfigure(2, weight=1)
+    frameSesion.grid(row=0, column=0, columnspan=3,sticky="nsew", padx=20, pady=20)
+
+    imagen = Image.open(os.path.join(ruta_script, "loginWorkout.png"))
+    lbl_fotoSesion = ctk.CTkLabel(frameSesion, image=ImageTk.PhotoImage(imagen), text="")
+    lbl_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+    lbl_datosSesion = ctk.CTkLabel(frameSesion, text="Hola: ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_datosSesion.grid(row=0, column=1, pady=10, sticky="w")
+    
+    imagen = Image.open(os.path.join(ruta_script, "campanaWorkout.png"))
+    imagen_tk = ImageTk.PhotoImage(imagen)
+    btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9")
+    btn_notificaciones.grid(row=0, column=2, padx=10, pady=10, sticky="e")
+
+
+    # Parte central de la ventana
+    imagen = Image.open(os.path.join(ruta_script, "logoWorkout.png"))
+    imagen_tk = ImageTk.PhotoImage(imagen)
+    lbl_espacio = tk.Label(ventana,image=imagen_tk, text="",width=184,height=184)
+    lbl_espacio.image = imagen_tk  # Mantener una referencia a la imagen
     lbl_espacio.grid(row=1, column=1, padx=10, pady=10)
 
     frameTimer = ctk.CTkFrame(ventana, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
@@ -38,7 +54,7 @@ def interfazInicial():
     lbl_timer = tk.Label(frameTimer, text="Tiempo", font=("Arial", 14, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_timer.grid(row=0, column=0, padx = 30,pady=(20,30),sticky="w")
 
-    imagen = Image.open(ruta_imagen)
+    imagen = Image.open(os.path.join(ruta_script, "pngwing.com.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
     lbl_imagen = tk.Label(frameTimer, image=imagen_tk, bg="#c4d2f4",height=20, width=20)
     lbl_imagen.image = imagen_tk  # Mantener una referencia a la imagen
@@ -47,7 +63,7 @@ def interfazInicial():
     lbl_fecha = tk.Label(frameTimer, text= mostrar_fecha(), font=("Arial", 12, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_fecha.grid(row=1, column=0, padx = 30,pady=20,sticky="w")
 
-    imgaenCalendario = Image.open(ruta_imagenCalendario)
+    imgaenCalendario = Image.open(os.path.join(ruta_script, "calendarioWorkout.png"))
     imagen_tkCalendario = ImageTk.PhotoImage(imgaenCalendario)
     lbl_imagenCalendario = tk.Label(frameTimer, image=imagen_tkCalendario, bg="#c4d2f4",height=20, width=20)
     lbl_imagenCalendario.image = imagen_tkCalendario  # Mantener una referencia a la imagen
