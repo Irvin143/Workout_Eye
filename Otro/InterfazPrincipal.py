@@ -33,6 +33,7 @@ def detectar_camaras():
     return indices
 
 def mostrar_camara():
+    global combo_camaras
     cam_index = int(combo_camaras.get())
     cap = cv2.VideoCapture(cam_index)
     pose = mp.solutions.pose.Pose(static_image_mode=False)
@@ -43,7 +44,6 @@ def mostrar_camara():
     
     lbl_video = tk.Label(ventana_camara)
     lbl_video.pack()
-
     def actualizar_frame():
         ret, frame = cap.read()
         if not ret:
@@ -105,7 +105,6 @@ from tkinter import ttk
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import os
-from PIL import Image
 from Conexion import conectar_bd
 
 
@@ -205,7 +204,8 @@ def interfazInicial():
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=75
+    height=75,
+    command=interfaz  # Llama a la función mostrar_camara al hacer clic
     )   
     btn_camara.grid(row=2, column=2, padx=10, pady=10)
 
@@ -265,7 +265,7 @@ def mostrar_hora():
     lbl_hora.after(1000, mostrar_hora)
 
 def main():
-    interfaz()
+    interfazInicial()
 
 if __name__ == "__main__":
     main()
