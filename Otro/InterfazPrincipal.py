@@ -1,3 +1,4 @@
+"""
 import cv2
 import tkinter as tk
 from tkinter import ttk
@@ -98,7 +99,7 @@ def interfaz():
     btn_camara.pack(pady=20)
 
     ventana.mainloop()
-
+"""
 
 import tkinter as tk
 from tkinter import ttk
@@ -263,12 +264,6 @@ def mostrar_hora():
     lbl_hora.configure(text=hora_actual)
     # Llama esta función otra vez después de 1000 ms (1 segundo)
     lbl_hora.after(1000, mostrar_hora)
-
-def main():
-    interfazInicial()
-
-if __name__ == "__main__":
-    main()
 
 import cv2
 import tkinter as tk
@@ -466,7 +461,7 @@ def interfaz():
     ventana.mainloop()
 
 def main():
-    interfaz()
+    interfazInicial()
 
 if __name__ == "__main__":
     main()
