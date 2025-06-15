@@ -130,9 +130,6 @@ def evaluar_sentadilla(keypoints_cuerpo):
 
     rodillas_ok = True
 
-    profundidad_izquierda = False
-    profundidad_derecha = False
-
     for i, frame_kp in enumerate(keypoints_cuerpo):
         anguloDerecho = calcular_angulo(frame_kp["right_hip"],frame_kp["right_knee"], frame_kp["right_ankle"])
         anguloIzquierdo = calcular_angulo(frame_kp["left_hip"], frame_kp["left_knee"],frame_kp["left_ankle"])
