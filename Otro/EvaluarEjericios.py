@@ -6,10 +6,6 @@ def veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
         print("No se detectaron poses.")
         return "Desconocido"
     
-    if not zonaError:
-        print("No se detectaron errores en el curl de bíceps.")
-        return []
-    
     if "left_elbow" in zonaError:
         hombro_dx = int(landmarks[15].x * ancho)
         hombro_dy = int(landmarks[15].y * altura)
@@ -63,10 +59,6 @@ def veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
     if len(keypoints_cuerpo) == 0:
         print("No se detectaron poses.")
         return "Desconocido"
-    
-    if not zonaError:
-        print("No se detectaron errores en la sentadilla.")
-        return []
     
     if "left_knee" in zonaError:
         rodilla_dx = int(landmarks[24].x * ancho)

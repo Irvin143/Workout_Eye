@@ -118,6 +118,7 @@ import pickle
 from Predecir import convertir_landmarks_a_diccionario
 from Predecir import main as predecirMain
 from EvaluarEjericios import *
+from pygrabber.dshow_graph import FilterGraph
 
 # Variables globales
 model = None
@@ -151,24 +152,29 @@ def ventanaEspalda():
     tk.Label(nueva_ventana, text="Esta es la ventana de espalda").pack(pady=20)
 
 def detectar_camaras():
-    indices = []
-    for i in range(2):  # Escanear las primeras 2 cámaras
+    camaras_disponibles = []
+    graph = FilterGraph()
+    dispositivos = graph.get_input_devices()
+
+    for i, nombre in enumerate(dispositivos):
         cap = cv2.VideoCapture(i)
         if cap.read()[0]:
-            indices.append(str(i))
+            camaras_disponibles.append((str(i), nombre))
         cap.release()
-    return indices
+
+    return camaras_disponibles
 
 def mostrar_camara():
-    global   nombre_ejercicio, zonaError
+    global   nombre_ejercicio, zonaError,animar
     zonaError = []  # Lista para almacenar las zonas de error
     nombre_ejercicio = "Desconocido"
     keypoints = []  # Lista para almacenar los keypoints
 
-    cam_index = int(combo_camaras.get())
+    cam_index = int(opcion.get())  # Obtener el índice de la cámara seleccionada
     cap = cv2.VideoCapture(cam_index)
-    pose = mp.solutions.pose.Pose(static_image_mode=False)
+    pose = mp.solutions.pose.Pose(static_image_mode = False)
     
+    animar = False
     ventana_camara = tk.Toplevel()
     ventana_camara.title("Procesando cámara")
     ventana_camara.geometry("800x600")
@@ -271,33 +277,50 @@ def predecir_ejercicio(keypoints):
 import time
 
 def cargarInterfazCamaras(btn):
-    global camaras_disponibles,animar,ventanaInicial
+    global camaras_disponibles,ventanaInicial
     camaras_disponibles = []
-    textoAnterior = btn.cget("text")
-    animar = True  # Variable para controlar la animación de puntos
 
     def cargar_camaras():
-        global camaras_disponibles
+        global camaras_disponibles,frameCamaras,opcion,animar
+        btn.configure(state="disabled")
         camaras_disponibles = detectar_camaras()
-        ventanaInicial.after(0, actualizar_ui_con_camaras)
-
-    def actualizar_ui_con_camaras():
-        global animar
+        for i, (indice, nombre) in enumerate(camaras_disponibles):
+            camaras_disponibles[i] = f"{indice} - {nombre}"
+            # Crear los radio buttons
+            radio = ctk.CTkRadioButton(frameCamaras, text=f"{nombre}",
+                                        variable=opcion, 
+                                        value=f"{i}",
+                                        fg_color="#1F3E3E", 
+                                        text_color="#393E46",
+                                        border_color="#FFFFFF")
+            radio.grid(row=i + 2, column=0, padx=10, pady=10, sticky="w")
         animar = False
-        btn.configure(text=textoAnterior)
-        mostrar_ventana_principal()
 
-    def animar_texto():
-        def ciclo(i=0):
-            if animar:
-                puntos = "." * (i % 4)
-                btn.configure(text=f"Cargando{puntos}")
-                ventanaInicial.after(300, ciclo, i + 1)
-        ciclo()
-    animar_texto()
+    animar_texto(btn)
     threading.Thread(target=cargar_camaras).start()
 
+def animar_texto(btn):
+    global animar 
+    animar = True
+    textoAnterior = btn.cget("text")
+    def ciclo(i=0):
+        if animar:
+            puntos = "." * (i % 4)
+            btn.configure(text=f"Cargando{puntos}")
+            ventanaInicial.after(300, ciclo, i + 1)
+        else:
+            btn.configure(text=textoAnterior)
+            btn.configure(state="normal")
+    ciclo()
 
+def cargarCamara(btn):
+    global lbl_txtSeleccion
+    if opcion.get() == "":
+        lbl_txtSeleccion.configure(text_color = "#ff0000")
+    else:
+        lbl_txtSeleccion.configure(text_color = "#393E46")
+        animar_texto(btn)
+        threading.Thread(target = mostrar_camara).start()
 
 def mostrar_ventana_principal():
     global combo_camaras, camaras_disponibles
@@ -305,18 +328,6 @@ def mostrar_ventana_principal():
     ventana = tk.Tk()
     ventana.title("Ventana Principal")
     centrar_ventana(ventana, 500, 500)  # Centrar ventana
-
-    lbl_titulo = tk.Label(ventana, text="Selecciona el músculo a entrenar")
-    lbl_titulo.pack(pady=20)
-
-    btn_pierna = tk.Button(ventana, text="Pierna", command=ventanaPierna)
-    btn_pierna.pack(pady=10)
-
-    btn_pecho = tk.Button(ventana, text="Pecho", command=ventanaPecho)
-    btn_pecho.pack(pady=10)
-
-    btn_espalda = tk.Button(ventana, text="Espalda", command=ventanaEspalda)
-    btn_espalda.pack(pady=10)
 
     lbl_combo = tk.Label(ventana, text="Selecciona una cámara")
     lbl_combo.pack(pady=10)
@@ -342,7 +353,7 @@ def centrar_ventana(ventana, ancho, alto):
     ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
 
 def interfazInicial():
-    global lbl_hora,ventanaInicial
+    global lbl_hora,ventanaInicial, frameCamaras, opcion
 
     nombreUsuario = "Irvin"
     conexion = conectar_bd(nombreUsuario, "123")
@@ -432,18 +443,20 @@ def interfazInicial():
     lbl_horaTexto = tk.Label(frameTimer, text="Horas", font=("Arial", 12, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_horaTexto.grid(row=3, column=0, padx = 30,sticky="w")
 
-    """ventana,
-    text="Iniciar cámara",
-    font=("Arial", 14, "bold"),
-    bg="#222831",        # Fondo oscuro (como transparente en tema oscuro)
-    fg="#EEEEEE",        # Texto claro
-    activebackground="#393E46",  # Color cuando haces clic
-    activeforeground="#00ADB5",  # Color del texto cuando haces clic
-    borderwidth=0,       # Sin borde
-    width=25,
-    height=
-    )"""
-    global btn_camara
+    frameCamaras = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
+    frameCamaras.columnconfigure(0, weight=1)
+    frameCamaras.grid_propagate(False)
+    frameCamaras.grid(row = 3, column = 2, padx=20, pady=20)
+
+    lbl_txtCamaras = ctk.CTkLabel(frameCamaras, text="Cámaras disponibles: ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_txtCamaras.grid(row=0, column=0, padx=10, pady=10)
+    
+    global lbl_txtSeleccion
+    lbl_txtSeleccion = ctk.CTkLabel(frameCamaras, text="Selecciona una cámara", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_txtSeleccion.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="w")
+
+    opcion = ctk.StringVar(value="")  
+
     # Botón Iniciar Cámara (centro)
     btn_camara =ctk.CTkButton(
     ventanaInicial,
@@ -453,10 +466,11 @@ def interfazInicial():
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=75  # Llama a la función mostrar_camara al hacer clic
+    height=75
     )   
-    btn_camara.configure(command=lambda: cargarInterfazCamaras(btn_camara))  # Cambia el comando del botón
     btn_camara.grid(row=2, column=2, padx=10, pady=10)
+    btn_camara.configure(command = lambda: cargarCamara(btn_camara))
+    threading.Thread(target=cargarInterfazCamaras(btn_camara)).start() 
 
     # Botón Entrenar Modelo (centro)
     btn_entrenar = ctk.CTkButton(
