@@ -106,6 +106,7 @@ from tkinter import ttk
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # '0' = all logs, '1' = filter INFO, '2' = filter WARNING, '3' = only ERROR
 from Conexion import conectar_bd
 import cv2
 import mediapipe as mp
@@ -118,9 +119,19 @@ from Predecir import convertir_landmarks_a_diccionario
 from Predecir import main as predecirMain
 from EvaluarEjericios import *
 
-model = load_model("modelo_ejercicios.h5")
-with open("labels.pkl", "rb") as f:
-    le = pickle.load(f)
+# Variables globales
+model = None
+le = None
+modelo_listo = False
+
+def cargar_modelo_y_labels():
+    global model, le, modelo_listo
+    print("Cargando modelo y etiquetas...")
+    model = load_model("modelo_ejercicios.h5")
+    with open("labels.pkl", "rb") as f:
+        le = pickle.load(f)
+    modelo_listo = True
+    print("Modelo y etiquetas cargados.")
 
 def ventanaPierna():
     nueva_ventana = tk.Toplevel()
@@ -470,7 +481,7 @@ def interfazInicial():
     text_color="white",
     width=250,
     height=75,
-    command=predecirMain
+    command=lambda: predecirMain(model, le)  # Llama a la función predecirMain al hacer clic
     )   
     btn_videoGuardado.grid(row=2, column=1, pady=10)
 
@@ -505,6 +516,7 @@ def mostrar_hora():
     lbl_hora.after(1000, mostrar_hora)
 
 def main():
+    threading.Thread(target=cargar_modelo_y_labels).start()  # Cargar el modelo y etiquetas en un hilo separado
     interfazInicial()
 
 if __name__ == "__main__":

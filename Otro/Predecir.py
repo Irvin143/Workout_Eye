@@ -74,7 +74,7 @@ def convertir_landmarks_a_diccionario(results):
             puntos_xy[nombre] = [landmark.x, landmark.y]
     return puntos_xy
 
-def main():
+def main( model, le):
     video_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi")])
 
     print("Extrayendo keypoints...")
@@ -84,11 +84,6 @@ def main():
         return
 
     X = np.array(X)
-
-    print("Cargando modelo y codificador...")
-    model = load_model("modelo_ejercicios.h5")
-    with open("labels.pkl", "rb") as f:
-        le = pickle.load(f)
 
     print("Realizando predicciones...")
     preds = model.predict(X)
