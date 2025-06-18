@@ -259,9 +259,10 @@ def predecir_ejercicio(keypoints):
     return ejercicio
 import time
 
-def cargarInterfazCamaras():
+def cargarInterfazCamaras(btn):
     global camaras_disponibles,animar,ventanaInicial
     camaras_disponibles = []
+    textoAnterior = btn.cget("text")
     animar = True  # Variable para controlar la animación de puntos
 
     def cargar_camaras():
@@ -272,14 +273,14 @@ def cargarInterfazCamaras():
     def actualizar_ui_con_camaras():
         global animar
         animar = False
-        btn_camara.configure(text="Iniciar cámara")
+        btn.configure(text=textoAnterior)
         mostrar_ventana_principal()
 
     def animar_texto():
         def ciclo(i=0):
             if animar:
                 puntos = "." * (i % 4)
-                btn_camara.configure(text=f"Cargando{puntos}")
+                btn.configure(text=f"Cargando{puntos}")
                 ventanaInicial.after(300, ciclo, i + 1)
         ciclo()
     animar_texto()
@@ -345,6 +346,8 @@ def interfazInicial():
     ventanaInicial.columnconfigure(0, weight=1)
     ventanaInicial.columnconfigure(1, weight=1)
     ventanaInicial.columnconfigure(2, weight=1)
+    ventanaInicial.overrideredirect(True)  # Elimina la barra de título
+
 
 
     #Parte de arriba de la sesion
@@ -439,9 +442,9 @@ def interfazInicial():
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=75,
-    command=cargarInterfazCamaras  # Llama a la función mostrar_camara al hacer clic
+    height=75  # Llama a la función mostrar_camara al hacer clic
     )   
+    btn_camara.configure(command=lambda: cargarInterfazCamaras(btn_camara))  # Cambia el comando del botón
     btn_camara.grid(row=2, column=2, padx=10, pady=10)
 
     # Botón Entrenar Modelo (centro)
@@ -480,7 +483,8 @@ def interfazInicial():
     fg_color="#00ADB5",
     text_color="white",
     width=25,
-    height=10
+    height=10,
+    command=ventanaInicial.destroy  # Cierra la ventana al hacer clic
     )   
     btn_cerrar.grid(row=4, column=0, padx=10, pady=50, sticky="w")
 
