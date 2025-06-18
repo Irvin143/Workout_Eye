@@ -115,7 +115,7 @@ from tensorflow.keras.models import load_model
 from keras.models import load_model
 import pickle
 from Predecir import evaluar_sentadilla,convertir_landmarks_a_diccionario
-from Predecir import main as predecirMain
+from Predecir import main as predecirMain,evaluar_curl_biceps
 
 model = load_model("modelo_ejercicios.h5")
 with open("labels.pkl", "rb") as f:
@@ -167,7 +167,7 @@ def mostrar_camara():
     lbl_video.pack()
 
     def actualizar_frame():
-        global marcas_error_global,nombre_ejercicio,zonaError
+        global marcas_error_global,nombre_ejercicio,zonaError, frame_rgb
         keypoints_cuerpo = []
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
@@ -194,20 +194,18 @@ def mostrar_camara():
             keypoints_cuerpo.append(keyCuerpo)
             keypoints.append(puntos)
 
-            if nombre_ejercicio == "squat":
-                marcas_error_global = veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
-                for marca in marcas_error_global:
-                    if marca[0] == "punto":
-                        _, x, y = marca
-                        cv2.circle(frame_rgb, (x, y), 8, (0, 0, 255), -1)
-                    elif marca[0] == "linea":
-                        _, x1, y1, x2, y2 = marca
-                        cv2.line(frame_rgb, (x1, y1), (x2, y2), (0, 0, 255), 3)
-                        # cv2.circle(frame_rgb, (rodilla_dx, rodilla_dy), 10, (255, 0, 0), -1)  # rojo en BGR
-            
+            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+
             if len(keypoints) == ventana_tamaño:
                 nombre_ejercicio = predecir_ejercicio(keypoints)
-                zonaError = evaluar_sentadilla(keypoints_cuerpo)
+                match nombre_ejercicio:
+                    case "squat":
+                        zonaError = evaluar_sentadilla(keypoints_cuerpo)
+                    case "barbell biceps curl":
+                        zonaError = evaluar_curl_biceps(keypoints_cuerpo)
+                        print(f"Zona de error detectada: {zonaError}")
+                    case _:
+                        zonaError = []
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
                 # Reiniciar ventana para siguiente predicción
                 keypoints.clear()
@@ -221,6 +219,52 @@ def mostrar_camara():
         ventana_camara.after(10, actualizar_frame)
 
     actualizar_frame()
+
+def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError):
+    global frame_rgb
+    marcas_error_global = []
+
+    def marcar_error(marcas):
+        for marca in marcas:
+            if marca[0] == "punto":
+                _, x, y = marca
+                cv2.circle(frame_rgb, (x, y), 8, (0, 0, 255), -1)
+            elif marca[0] == "linea":
+                _, x1, y1, x2, y2 = marca
+                cv2.line(frame_rgb, (x1, y1), (x2, y2), (0, 0, 255), 3)
+
+    match nombreEjercicio:
+        case "squat":
+            marcas_error_global = veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+            marcar_error(marcas_error_global)
+        case "barbell biceps curl":
+            marcas_error_global = veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+            marcar_error(marcas_error_global)
+
+def veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
+    marcas_error_global = []
+    if len(keypoints_cuerpo) == 0:
+        print("No se detectaron poses.")
+        return "Desconocido"
+    
+    if not zonaError:
+        print("No se detectaron errores en el curl de bíceps.")
+        return []
+    
+    if "left_elbow" in zonaError:
+        hombro_dx = int(landmarks[15].x * ancho)
+        hombro_dy = int(landmarks[15].y * altura)
+        codo_dx = int(landmarks[13].x * ancho)
+        codo_dy = int(landmarks[13].y * altura)
+        marcas_error_global.append(("linea", codo_dx, codo_dy, hombro_dx, hombro_dy))
+    if "right_elbow" in zonaError:
+        hombro_dx = int(landmarks[16].x * ancho)
+        hombro_dy = int(landmarks[16].y * altura)
+        codo_dx = int(landmarks[14].x * ancho)
+        codo_dy = int(landmarks[14].y * altura)
+        marcas_error_global.append(("linea", codo_dx, codo_dy, hombro_dx, hombro_dy))
+    
+    return marcas_error_global
 
 def veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
     marcas_error_global = []
