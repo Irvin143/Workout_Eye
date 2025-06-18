@@ -114,8 +114,9 @@ from collections import Counter
 from tensorflow.keras.models import load_model
 from keras.models import load_model
 import pickle
-from Predecir import evaluar_sentadilla,convertir_landmarks_a_diccionario
-from Predecir import main as predecirMain,evaluar_curl_biceps
+from Predecir import convertir_landmarks_a_diccionario
+from Predecir import main as predecirMain
+from EvaluarEjericios import *
 
 model = load_model("modelo_ejercicios.h5")
 with open("labels.pkl", "rb") as f:
@@ -191,7 +192,9 @@ def mostrar_camara():
                 puntos.extend([lm.x, lm.y, lm.z])
             
             keyCuerpo = convertir_landmarks_a_diccionario(results)
+            # Keypoints_cuerpo es un diccionario con las coordenadas de los landmarks
             keypoints_cuerpo.append(keyCuerpo)
+            #keypoints son los puntos en formato lista
             keypoints.append(puntos)
 
             evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError)
@@ -240,59 +243,6 @@ def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura
         case "barbell biceps curl":
             marcas_error_global = veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
             marcar_error(marcas_error_global)
-
-def veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
-    marcas_error_global = []
-    if len(keypoints_cuerpo) == 0:
-        print("No se detectaron poses.")
-        return "Desconocido"
-    
-    if not zonaError:
-        print("No se detectaron errores en el curl de bíceps.")
-        return []
-    
-    if "left_elbow" in zonaError:
-        hombro_dx = int(landmarks[15].x * ancho)
-        hombro_dy = int(landmarks[15].y * altura)
-        codo_dx = int(landmarks[13].x * ancho)
-        codo_dy = int(landmarks[13].y * altura)
-        marcas_error_global.append(("linea", codo_dx, codo_dy, hombro_dx, hombro_dy))
-    if "right_elbow" in zonaError:
-        hombro_dx = int(landmarks[16].x * ancho)
-        hombro_dy = int(landmarks[16].y * altura)
-        codo_dx = int(landmarks[14].x * ancho)
-        codo_dy = int(landmarks[14].y * altura)
-        marcas_error_global.append(("linea", codo_dx, codo_dy, hombro_dx, hombro_dy))
-    
-    return marcas_error_global
-
-def veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
-    marcas_error_global = []
-    if len(keypoints_cuerpo) == 0:
-        print("No se detectaron poses.")
-        return "Desconocido"
-    
-    if not zonaError:
-        print("No se detectaron errores en la sentadilla.")
-        return []
-    
-    if "left_knee" in zonaError:
-        rodilla_dx = int(landmarks[24].x * ancho)
-        rodilla_dy = int(landmarks[24].y * altura)
-        marcas_error_global.append(("punto", rodilla_dx,rodilla_dy ))
-    if "right_hip" in zonaError:
-        cadera_dx = int(landmarks[23].x * ancho)
-        cadera_dy = int(landmarks[23].y * altura)
-        marcas_error_global.append(("punto", cadera_dx, cadera_dy))
-    if "back" in zonaError:
-        hombro_dx = int(landmarks[12].x * ancho)
-        hombro_dy = int(landmarks[12].y * altura)
-
-        cadera_dx = int(landmarks[24].x * ancho)
-        cadera_dy = int(landmarks[24].y * altura)
-        marcas_error_global.append(("linea", cadera_dx, cadera_dy, hombro_dx, hombro_dy))
-    
-    return marcas_error_global
 
 def predecir_ejercicio(keypoints):
     if len(keypoints) == 0:
