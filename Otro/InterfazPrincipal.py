@@ -149,11 +149,9 @@ def detectar_camaras():
     return indices
 
 def mostrar_camara():
-    global  marcas_error_global, nombre_ejercicio, zonaError
+    global   nombre_ejercicio, zonaError
     zonaError = []  # Lista para almacenar las zonas de error
     nombre_ejercicio = "Desconocido"
-    #zonaError = []  # Lista para almacenar las zonas de error
-    marcas_error_global = []  # Lista para almacenar las marcas de error
     keypoints = []  # Lista para almacenar los keypoints
 
     cam_index = int(combo_camaras.get())
@@ -168,7 +166,7 @@ def mostrar_camara():
     lbl_video.pack()
 
     def actualizar_frame():
-        global marcas_error_global,nombre_ejercicio,zonaError, frame_rgb
+        global nombre_ejercicio,zonaError, frame_rgb
         keypoints_cuerpo = []
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
@@ -206,7 +204,6 @@ def mostrar_camara():
                         zonaError = evaluar_sentadilla(keypoints_cuerpo)
                     case "barbell biceps curl":
                         zonaError = evaluar_curl_biceps(keypoints_cuerpo)
-                        print(f"Zona de error detectada: {zonaError}")
                     case _:
                         zonaError = []
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
@@ -293,7 +290,7 @@ def interfaz():
     btn_camara.pack(pady=20)
 
     ventana.mainloop()
-
+    
 def interfazInicial():
     global lbl_hora
 
@@ -330,13 +327,26 @@ def interfazInicial():
     btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9")
     btn_notificaciones.grid(row=0, column=2, padx=10, pady=10, sticky="e")
 
+    frameLogo = ctk.CTkFrame(ventana, corner_radius=20, height=180)
+    frameLogo.columnconfigure(0, weight=1)
+    frameLogo.columnconfigure(1, weight=1)
+    frameLogo.columnconfigure(2, weight=1)
+    #frameLogo.grid_propagate(False)
+    frameLogo.grid(row=1, column=0,columnspan=3, sticky="nsew", padx=20, pady=20)
 
-    # Parte central de la ventana
-    imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png"))
-    imagen_tk = ImageTk.PhotoImage(imagen)
-    lbl_espacio = ctk.CTkLabel(ventana,image=imagen_tk, text="",width=184,height=184,fg_color="#ffffff")
-    lbl_espacio.image = imagen_tk  # Mantener una referencia a la imagen
-    lbl_espacio.grid(row=1, column=1, padx=10, pady=10)
+    fondo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "fondoWorkout.png")).convert("RGBA")
+    logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png")).convert("RGBA")
+
+    x = (fondo.width - logo.width) // 2
+    y = (fondo.height - logo.height) // 2
+
+    fondo.paste(logo, (x, y), logo)
+    imagen_combinada = ImageTk.PhotoImage(fondo)
+
+    #imagen_tk = ImageTk.PhotoImage(imagen)
+    lbl_fondo = ctk.CTkLabel(frameLogo, image= imagen_combinada, text="",height=180)
+    lbl_fondo.image = imagen_tk  # Mantener una referencia a la imagen
+    lbl_fondo.place(x=0, y=0, relwidth=1, relheight=1)
 
     frameTimer = ctk.CTkFrame(ventana, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameTimer.columnconfigure(0, weight=1)
@@ -350,7 +360,7 @@ def interfazInicial():
 
     imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "pngwing.com.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
-    lbl_imagen = tk.Label(frameTimer, image=imagen_tk, bg="#c4d2f4",height=20, width=20)
+    lbl_imagen = tk.Label(frameTimer, image=imagen_tk, bg="#c4d2f4",height=20, width=20,)
     lbl_imagen.image = imagen_tk  # Mantener una referencia a la imagen
     lbl_imagen.grid(row=0, column=1, padx=10, pady=(20,30), sticky="e")
 
