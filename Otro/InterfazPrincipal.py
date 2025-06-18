@@ -100,7 +100,7 @@ def interfaz():
 
     ventana.mainloop()
 """
-
+import threading
 import tkinter as tk
 from tkinter import ttk
 import customtkinter as ctk
@@ -141,7 +141,7 @@ def ventanaEspalda():
 
 def detectar_camaras():
     indices = []
-    for i in range(5):  # Escanear las primeras 5 cámaras
+    for i in range(2):  # Escanear las primeras 2 cámaras
         cap = cv2.VideoCapture(i)
         if cap.read()[0]:
             indices.append(str(i))
@@ -257,13 +257,42 @@ def predecir_ejercicio(keypoints):
     ejercicio = le.inverse_transform([clase_mayoritaria])[0]
 
     return ejercicio
+import time
 
-def interfaz():
-    global combo_camaras
+def cargarInterfazCamaras():
+    global camaras_disponibles,animar,ventanaInicial
+    camaras_disponibles = []
+    animar = True  # Variable para controlar la animación de puntos
+
+    def cargar_camaras():
+        global camaras_disponibles
+        camaras_disponibles = detectar_camaras()
+        ventanaInicial.after(0, actualizar_ui_con_camaras)
+
+    def actualizar_ui_con_camaras():
+        global animar
+        animar = False
+        btn_camara.configure(text="Iniciar cámara")
+        mostrar_ventana_principal()
+
+    def animar_texto():
+        def ciclo(i=0):
+            if animar:
+                puntos = "." * (i % 4)
+                btn_camara.configure(text=f"Cargando{puntos}")
+                ventanaInicial.after(300, ciclo, i + 1)
+        ciclo()
+    animar_texto()
+    threading.Thread(target=cargar_camaras).start()
+
+
+
+def mostrar_ventana_principal():
+    global combo_camaras, camaras_disponibles
 
     ventana = tk.Tk()
     ventana.title("Ventana Principal")
-    ventana.geometry("500x500")
+    centrar_ventana(ventana, 500, 500)  # Centrar ventana
 
     lbl_titulo = tk.Label(ventana, text="Selecciona el músculo a entrenar")
     lbl_titulo.pack(pady=20)
@@ -280,7 +309,6 @@ def interfaz():
     lbl_combo = tk.Label(ventana, text="Selecciona una cámara")
     lbl_combo.pack(pady=10)
 
-    camaras_disponibles = detectar_camaras()
     combo_camaras = ttk.Combobox(ventana, values=camaras_disponibles, state="readonly")
     if camaras_disponibles:
         combo_camaras.current(0)
@@ -290,9 +318,19 @@ def interfaz():
     btn_camara.pack(pady=20)
 
     ventana.mainloop()
-    
+
+def centrar_ventana(ventana, ancho, alto):
+    ventana.update_idletasks()  # Asegura que obtenga tamaño de pantalla real
+    screen_width = ventana.winfo_screenwidth()
+    screen_height = ventana.winfo_screenheight()
+
+    x = (screen_width // 2) - (ancho // 2)
+    y = (screen_height // 2) - (alto // 2)
+
+    ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
+
 def interfazInicial():
-    global lbl_hora
+    global lbl_hora,ventanaInicial
 
     nombreUsuario = "Irvin"
     conexion = conectar_bd(nombreUsuario, "123")
@@ -300,16 +338,17 @@ def interfazInicial():
     # Obtener la ruta absoluta del script
     ruta_script = os.path.dirname(os.path.abspath(__file__))
 
-    ventana = ctk.CTk(fg_color="#FFFFFF")  # Fondo oscuro
-    ventana.title("Interfaz Secundaria")
-    ventana.geometry("1000x800")
-    ventana.columnconfigure(0, weight=1)
-    ventana.columnconfigure(1, weight=1)
-    ventana.columnconfigure(2, weight=1)
+    ventanaInicial = ctk.CTk(fg_color="#FFFFFF")  # Fondo oscuro
+    ventanaInicial.title("Interfaz Secundaria")
+
+    centrar_ventana(ventanaInicial, 1000, 800)  # Centrar ventana
+    ventanaInicial.columnconfigure(0, weight=1)
+    ventanaInicial.columnconfigure(1, weight=1)
+    ventanaInicial.columnconfigure(2, weight=1)
 
 
     #Parte de arriba de la sesion
-    frameSesion = ctk.CTkFrame(ventana, corner_radius=20, height=100,fg_color="#c4d2f4")
+    frameSesion = ctk.CTkFrame(ventanaInicial, corner_radius=20, height=100,fg_color="#c4d2f4")
     frameSesion.columnconfigure(0, weight=1)
     frameSesion.columnconfigure(1, weight=1)
     frameSesion.columnconfigure(2, weight=1)
@@ -327,7 +366,7 @@ def interfazInicial():
     btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9")
     btn_notificaciones.grid(row=0, column=2, padx=10, pady=10, sticky="e")
 
-    frameLogo = ctk.CTkFrame(ventana, corner_radius=20, height=180)
+    frameLogo = ctk.CTkFrame(ventanaInicial, corner_radius=20, height=180)
     frameLogo.columnconfigure(0, weight=1)
     frameLogo.columnconfigure(1, weight=1)
     frameLogo.columnconfigure(2, weight=1)
@@ -348,7 +387,7 @@ def interfazInicial():
     lbl_fondo.image = imagen_tk  # Mantener una referencia a la imagen
     lbl_fondo.place(x=0, y=0, relwidth=1, relheight=1)
 
-    frameTimer = ctk.CTkFrame(ventana, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
+    frameTimer = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameTimer.columnconfigure(0, weight=1)
     frameTimer.columnconfigure(1, weight=1)
     frameTimer.columnconfigure(2, weight=1)
@@ -390,10 +429,10 @@ def interfazInicial():
     width=25,
     height=
     )"""
-
+    global btn_camara
     # Botón Iniciar Cámara (centro)
     btn_camara =ctk.CTkButton(
-    ventana,
+    ventanaInicial,
     text="Iniciar cámara",
     font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
@@ -401,13 +440,13 @@ def interfazInicial():
     text_color="white",
     width=250,
     height=75,
-    command=interfaz  # Llama a la función mostrar_camara al hacer clic
+    command=cargarInterfazCamaras  # Llama a la función mostrar_camara al hacer clic
     )   
     btn_camara.grid(row=2, column=2, padx=10, pady=10)
 
     # Botón Entrenar Modelo (centro)
     btn_entrenar = ctk.CTkButton(
-    ventana,
+    ventanaInicial,
     text="Entrenar modelo",
     font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
@@ -420,7 +459,7 @@ def interfazInicial():
 
     # Botón Video Grabado (centro)
     btn_videoGuardado = ctk.CTkButton(
-    ventana,
+    ventanaInicial,
     text="Ingresar video grabado",
     font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
@@ -434,7 +473,7 @@ def interfazInicial():
 
     # Botón Cerrar (abajo izquierda)
     btn_cerrar = ctk.CTkButton(
-    ventana,
+    ventanaInicial,
     text="Cerrar",
     font=("Arial", 18, "bold"),
     corner_radius=20,  # ¡Esto sí redondea!
@@ -446,7 +485,7 @@ def interfazInicial():
     btn_cerrar.grid(row=4, column=0, padx=10, pady=50, sticky="w")
 
     mostrar_hora()  # Iniciar la actualización de la hora
-    ventana.mainloop()
+    ventanaInicial.mainloop()
 
 def mostrar_fecha():
     from datetime import datetime
