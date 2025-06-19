@@ -66,6 +66,8 @@ def extraer_keypoints(video_path):
     pose.close()
     return keypoints, keypoints_cuerpo
 
+
+
 def convertir_landmarks_a_diccionario(results):
     puntos_xy = {}
     if results.pose_landmarks:

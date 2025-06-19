@@ -1,105 +1,3 @@
-"""
-import cv2
-import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk
-import mediapipe as mp
-import numpy as np
-from collections import Counter
-
-def ventanaPierna():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Pierna")
-    nueva_ventana.geometry("300x200")
-
-def ventanaPecho():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Pecho")
-    nueva_ventana.geometry("300x200")
-    tk.Label(nueva_ventana, text="Esta es la ventana de pecho").pack(pady=20)
-
-def ventanaEspalda():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Espalda")
-    nueva_ventana.geometry("300x200")
-    tk.Label(nueva_ventana, text="Esta es la ventana de espalda").pack(pady=20)
-
-def detectar_camaras():
-    indices = []
-    for i in range(5):  # Escanear las primeras 5 cámaras
-        cap = cv2.VideoCapture(i)
-        if cap.read()[0]:
-            indices.append(str(i))
-        cap.release()
-    return indices
-
-def mostrar_camara():
-    global combo_camaras
-    cam_index = int(combo_camaras.get())
-    cap = cv2.VideoCapture(cam_index)
-    pose = mp.solutions.pose.Pose(static_image_mode=False)
-    
-    ventana_camara = tk.Toplevel()
-    ventana_camara.title("Procesando cámara")
-    ventana_camara.geometry("800x600")
-    
-    lbl_video = tk.Label(ventana_camara)
-    lbl_video.pack()
-    def actualizar_frame():
-        ret, frame = cap.read()
-        if not ret:
-            ventana_camara.after(10, actualizar_frame)
-            return
-
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(frame_rgb)
-
-        if results.pose_landmarks:
-            mp.solutions.drawing_utils.draw_landmarks(
-                frame_rgb, results.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS
-            )
-
-        img = Image.fromarray(frame_rgb)
-        imgtk = ImageTk.PhotoImage(image=img)
-        lbl_video.imgtk = imgtk
-        lbl_video.configure(image=imgtk)
-        ventana_camara.after(10, actualizar_frame)
-
-    actualizar_frame()
-
-def interfaz():
-    global combo_camaras
-
-    ventana = tk.Tk()
-    ventana.title("Ventana Principal")
-    ventana.geometry("500x500")
-
-    lbl_titulo = tk.Label(ventana, text="Selecciona el músculo a entrenar")
-    lbl_titulo.pack(pady=20)
-
-    btn_pierna = tk.Button(ventana, text="Pierna", command=ventanaPierna)
-    btn_pierna.pack(pady=10)
-
-    btn_pecho = tk.Button(ventana, text="Pecho", command=ventanaPecho)
-    btn_pecho.pack(pady=10)
-
-    btn_espalda = tk.Button(ventana, text="Espalda", command=ventanaEspalda)
-    btn_espalda.pack(pady=10)
-
-    lbl_combo = tk.Label(ventana, text="Selecciona una cámara")
-    lbl_combo.pack(pady=10)
-
-    camaras_disponibles = detectar_camaras()
-    combo_camaras = ttk.Combobox(ventana, values=camaras_disponibles, state="readonly")
-    if camaras_disponibles:
-        combo_camaras.current(0)
-    combo_camaras.pack(pady=10)
-
-    btn_camara = tk.Button(ventana, text="Iniciar cámara y detectar poses", command=mostrar_camara)
-    btn_camara.pack(pady=20)
-
-    ventana.mainloop()
-"""
 import threading
 import tkinter as tk
 from tkinter import ttk
@@ -133,23 +31,6 @@ def cargar_modelo_y_labels():
         le = pickle.load(f)
     modelo_listo = True
     print("Modelo y etiquetas cargados.")
-
-def ventanaPierna():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Pierna")
-    nueva_ventana.geometry("300x200")
-
-def ventanaPecho():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Pecho")
-    nueva_ventana.geometry("300x200")
-    tk.Label(nueva_ventana, text="Esta es la ventana de pecho").pack(pady=20)
-
-def ventanaEspalda():
-    nueva_ventana = tk.Toplevel()
-    nueva_ventana.title("Espalda")
-    nueva_ventana.geometry("300x200")
-    tk.Label(nueva_ventana, text="Esta es la ventana de espalda").pack(pady=20)
 
 def detectar_camaras():
     camaras_disponibles = []
@@ -238,7 +119,6 @@ def mostrar_camara():
     actualizar_frame()
 
 def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError):
-    global frame_rgb
     marcas_error_global = []
 
     def marcar_error(marcas):
@@ -274,7 +154,6 @@ def predecir_ejercicio(keypoints):
     ejercicio = le.inverse_transform([clase_mayoritaria])[0]
 
     return ejercicio
-import time
 
 def cargarInterfazCamaras(btn):
     global camaras_disponibles,ventanaInicial
@@ -282,7 +161,6 @@ def cargarInterfazCamaras(btn):
 
     def cargar_camaras():
         global camaras_disponibles,frameCamaras,opcion,animar
-        btn.configure(state="disabled")
         camaras_disponibles = detectar_camaras()
         for i, (indice, nombre) in enumerate(camaras_disponibles):
             camaras_disponibles[i] = f"{indice} - {nombre}"
@@ -305,6 +183,7 @@ def animar_texto(btn):
     textoAnterior = btn.cget("text")
     def ciclo(i=0):
         if animar:
+            btn.configure(state="disabled")
             puntos = "." * (i % 4)
             btn.configure(text=f"Cargando{puntos}")
             ventanaInicial.after(300, ciclo, i + 1)
@@ -321,26 +200,6 @@ def cargarCamara(btn):
         lbl_txtSeleccion.configure(text_color = "#393E46")
         animar_texto(btn)
         threading.Thread(target = mostrar_camara).start()
-
-def mostrar_ventana_principal():
-    global combo_camaras, camaras_disponibles
-
-    ventana = tk.Tk()
-    ventana.title("Ventana Principal")
-    centrar_ventana(ventana, 500, 500)  # Centrar ventana
-
-    lbl_combo = tk.Label(ventana, text="Selecciona una cámara")
-    lbl_combo.pack(pady=10)
-
-    combo_camaras = ttk.Combobox(ventana, values=camaras_disponibles, state="readonly")
-    if camaras_disponibles:
-        combo_camaras.current(0)
-    combo_camaras.pack(pady=10)
-
-    btn_camara = tk.Button(ventana, text="Iniciar cámara y detectar poses", command=mostrar_camara)
-    btn_camara.pack(pady=20)
-
-    ventana.mainloop()
 
 def centrar_ventana(ventana, ancho, alto):
     ventana.update_idletasks()  # Asegura que obtenga tamaño de pantalla real
@@ -370,8 +229,6 @@ def interfazInicial():
     ventanaInicial.columnconfigure(2, weight=1)
     ventanaInicial.overrideredirect(True)  # Elimina la barra de título
 
-
-
     #Parte de arriba de la sesion
     frameSesion = ctk.CTkFrame(ventanaInicial, corner_radius=20, height=100,fg_color="#c4d2f4")
     frameSesion.columnconfigure(0, weight=1)
@@ -383,7 +240,7 @@ def interfazInicial():
     lbl_fotoSesion = ctk.CTkLabel(frameSesion, image=ImageTk.PhotoImage(imagen), text="")
     lbl_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-    lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola: {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola, {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
     lbl_datosSesion.grid(row=0, column=0, padx = (55,0),pady=10, sticky="w")
 
     imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "campanaWorkout.png"))
@@ -442,6 +299,19 @@ def interfazInicial():
     
     lbl_horaTexto = tk.Label(frameTimer, text="Horas", font=("Arial", 12, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_horaTexto.grid(row=3, column=0, padx = 30,sticky="w")
+
+    frameEstadisticas = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
+    frameEstadisticas.columnconfigure(0, weight = 1)
+    frameEstadisticas.grid_propagate(False)
+    frameEstadisticas.grid(row = 3, column = 1,padx = 10,pady = 20)
+
+    btn_estadisticas = ctk.CTkButton(frameEstadisticas,fg_color="transparent",
+                                        text="Estadisticas",
+                                        font=("Arial", 18, "bold"),
+                                        corner_radius=20,  # ¡Esto sí redondea!
+                                        text_color="black",)
+    
+    btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = 10)
 
     frameCamaras = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameCamaras.columnconfigure(0, weight=1)
