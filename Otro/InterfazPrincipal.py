@@ -46,7 +46,9 @@ def detectar_camaras():
     return camaras_disponibles
 
 def mostrar_camara():
-    global   nombre_ejercicio, zonaError,animar
+    global   nombre_ejercicio, zonaError,animar,repeticiones,keypoints_cuerpo
+    keypoints_cuerpo = []
+    repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
     nombre_ejercicio = "Desconocido"
     keypoints = []  # Lista para almacenar los keypoints
@@ -64,8 +66,7 @@ def mostrar_camara():
     lbl_video.pack()
 
     def actualizar_frame():
-        global nombre_ejercicio,zonaError, frame_rgb
-        keypoints_cuerpo = []
+        global nombre_ejercicio,zonaError, frame_rgb,repeticiones,lbl_repeticiones,keypoints_cuerpo
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
         if not ret:
@@ -96,12 +97,16 @@ def mostrar_camara():
             evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError)
 
             if len(keypoints) == ventana_tamaño:
+                zonaError = []
                 nombre_ejercicio = predecir_ejercicio(keypoints)
                 match nombre_ejercicio:
                     case "squat":
                         zonaError = evaluar_sentadilla(keypoints_cuerpo)
                     case "barbell biceps curl":
-                        zonaError = evaluar_curl_biceps(keypoints_cuerpo)
+                        repeticionesAux = 0
+                        zonaError, repeticionesAux = evaluar_curl_biceps(keypoints_cuerpo)
+                        repeticiones += repeticionesAux
+                        lbl_repeticiones.configure(text = f"Repeticiones: {repeticiones}")
                     case _:
                         zonaError = []
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
@@ -310,8 +315,11 @@ def interfazInicial():
                                         font=("Arial", 18, "bold"),
                                         corner_radius=20,  # ¡Esto sí redondea!
                                         text_color="black",)
-    
     btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = 10)
+
+    global lbl_repeticiones
+    lbl_repeticiones = ctk.CTkLabel(frameEstadisticas, text="Repeticiones: 0 ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
+    lbl_repeticiones.grid(row = 1,column = 0,padx=20, pady=(0, 10), sticky="w")
 
     frameCamaras = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameCamaras.columnconfigure(0, weight=1)

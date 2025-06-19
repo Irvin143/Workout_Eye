@@ -25,7 +25,8 @@ def evaluar_curl_biceps(keypoints_cuerpo):
     zonaError = []
     angulo_codo_derecho = 0
     angulo_codo_izquierdo = 0
-
+    repeticiones = 0
+    estado = ""
     for i, frame_kp in enumerate(keypoints_cuerpo):
         angulo_codo_derecho = calcular_angulo(
             frame_kp["right_shoulder"],
@@ -37,6 +38,12 @@ def evaluar_curl_biceps(keypoints_cuerpo):
             frame_kp["left_elbow"],
             frame_kp["left_wrist"]
         )
+        print(angulo_codo_derecho)
+        if angulo_codo_derecho < 55:  # brazo flexionado
+            estado = "arriba"
+        elif angulo_codo_derecho > 120 and estado == "arriba":
+            estado = "abajo"
+            repeticiones += 1
         # Evaluación básica según el ángulo del codo
         if angulo_codo_derecho < 30 or angulo_codo_izquierdo < 30:
             veredicto = f"Frame {i}: ⚠️ Ángulo ({int(angulo_codo_derecho)}°) demasiado flexionado. Riesgo de usar impulso."
@@ -50,9 +57,8 @@ def evaluar_curl_biceps(keypoints_cuerpo):
             zonaError.append("left_elbow")
         else:
             veredicto = f"Frame {i}: ℹ️ Ángulo fuera del rango esperado ({int(angulo_codo_derecho)}°)."
-
     print(veredicto)
-    return zonaError
+    return zonaError,repeticiones
 
 def veredicto_squat(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
     marcas_error_global = []
