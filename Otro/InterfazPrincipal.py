@@ -322,6 +322,7 @@ def interfazInicial():
                                         corner_radius=20,  # ¡Esto sí redondea!
                                         text_color="black",)
     btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = (10,0))
+    btn_estadisticas.configure(command = mostrar_estadisticas)
 
     imagen_estadisticas = Image.open(os.path.join(ruta_script, "..", "Imagenes", "estadisticasWorkout.png"))
     imagen_tk_estadisticas = ImageTk.PhotoImage(imagen_estadisticas)
@@ -497,6 +498,168 @@ def interfazInicioSesion():
     lbl_footer.pack(side="bottom", pady=(10, 5))
 
     ventana_login.mainloop()
+    
+def mostrar_estadisticas():
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    import random
+    from datetime import datetime, timedelta
+
+    # Ventana de estadísticas a pantalla completa
+    ventana_stats = ctk.CTkToplevel()
+    ventana_stats.title("Estadísticas de Ejercicios")
+    # Maximiza la ventana pero sin quitar la barra de título ni poner fullscreen real
+    ventana_stats.state('zoomed')  # Para Windows: maximiza la ventana
+    # ventana_stats.attributes('-fullscreen', True)  # No usar fullscreen real para no ocultar barra de título
+    ventana_stats.configure(fg_color="#c4d2f4")
+
+    # Botón para salir/cerrar estadísticas
+    def salir_stats():
+        ventana_stats.destroy()
+
+    # Frame principal ocupa toda la ventana
+    frame_main = ctk.CTkFrame(ventana_stats, fg_color="#ffffff", corner_radius=15)
+    frame_main.pack(fill="both", expand=True, padx=40, pady=(40, 20))
+    frame_main.grid_rowconfigure(0, weight=1)
+    frame_main.grid_rowconfigure(1, weight=0)
+    frame_main.grid_rowconfigure(2, weight=0)
+    frame_main.grid_rowconfigure(3, weight=0)
+    frame_main.grid_columnconfigure(0, weight=2)
+    frame_main.grid_columnconfigure(1, weight=1)
+
+    # Frame para la gráfica (izquierda arriba)
+    frame_grafica = ctk.CTkFrame(frame_main, fg_color="#ffffff", corner_radius=10)
+    frame_grafica.grid(row=0, column=0, sticky="nsew", padx=(10, 10), pady=(10, 5))
+
+    # Frame para detalles (derecha arriba)
+    frame_detalles = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_detalles.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=(10, 5))
+
+    # Frame para resumen (derecha medio)
+    frame_resumen = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_resumen.grid(row=1, column=1, sticky="nsew", padx=(0, 10), pady=(5, 5))
+
+    # Frame para progreso semanal (derecha abajo)
+    frame_progreso = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_progreso.grid(row=2, column=1, sticky="nsew", padx=(0, 10), pady=(5, 5))
+
+    # Frame para historial (izquierda medio)
+    frame_historial = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_historial.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=(10, 10), pady=(5, 5))
+
+    # Frame para ranking (izquierda abajo)
+    frame_ranking = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_ranking.grid(row=3, column=0, sticky="nsew", padx=(10, 10), pady=(5, 10))
+
+    # Frame para consejos (derecha abajo)
+    frame_consejos = ctk.CTkFrame(frame_main, fg_color="#e6eaf8", corner_radius=10)
+    frame_consejos.grid(row=3, column=1, sticky="nsew", padx=(0, 10), pady=(5, 10))
+
+    # Simulación de datos (reemplaza con tus datos reales)
+    ejercicios = ["Sentadillas", "Curl Bíceps"]
+    repeticiones = [15, 20]
+    tiempo_total = "00:25:30"
+    fecha_ultima = "2024-06-10"
+    mejor_ejercicio = ejercicios[repeticiones.index(max(repeticiones))]
+
+    # Crear figura de matplotlib
+    fig, ax = plt.subplots(figsize=(4, 3), dpi=100)
+    barras = ax.bar(ejercicios, repeticiones, color=["#00ADB5", "#393E46"])
+    ax.set_ylabel("Repeticiones")
+    ax.set_title("Repeticiones por ejercicio")
+    ax.set_ylim(0, max(repeticiones) + 5)
+    for bar in barras:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom', fontsize=10)
+    fig.tight_layout()
+
+    # Integrar la gráfica en Tkinter
+    canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+    # Detalles de la sesión (derecha arriba)
+    lbl_detalles = ctk.CTkLabel(frame_detalles, text="Detalles de la sesión", font=("Arial", 16, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_detalles.pack(pady=(10, 5))
+    lbl_fecha = ctk.CTkLabel(frame_detalles, text=f"Última sesión: {fecha_ultima}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_fecha.pack(pady=5)
+    lbl_tiempo = ctk.CTkLabel(frame_detalles, text=f"Tiempo total: {tiempo_total}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_tiempo.pack(pady=5)
+    lbl_mejor = ctk.CTkLabel(frame_detalles, text=f"Ejercicio destacado: {mejor_ejercicio}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#00ADB5")
+    lbl_mejor.pack(pady=5)
+
+    # Resumen (derecha medio)
+    lbl_resumen = ctk.CTkLabel(frame_resumen, text="Resumen", font=("Arial", 15, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_resumen.pack(pady=(10, 5))
+    lbl_total = ctk.CTkLabel(frame_resumen, text=f"Total de repeticiones: {sum(repeticiones)}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_total.pack(pady=5)
+    lbl_ejercicios = ctk.CTkLabel(frame_resumen, text=f"Ejercicios realizados: {len(ejercicios)}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_ejercicios.pack(pady=5)
+
+    # Progreso semanal (derecha abajo)
+    dias = [(datetime.now() - timedelta(days=i)).strftime("%d/%m") for i in range(6, -1, -1)]
+    repeticiones_semanal = [random.randint(5, 20) for _ in dias]
+
+    lbl_progreso = ctk.CTkLabel(frame_progreso, text="Progreso semanal", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_progreso.pack(pady=(10, 5))
+
+    fig2, ax2 = plt.subplots(figsize=(3, 1.5), dpi=100)
+    ax2.plot(dias, repeticiones_semanal, marker='o', color="#00ADB5")
+    ax2.set_ylabel("Reps")
+    ax2.set_title("Repeticiones últimos 7 días")
+    ax2.set_ylim(0, max(repeticiones_semanal) + 5)
+    fig2.tight_layout()
+    canvas2 = FigureCanvasTkAgg(fig2, master=frame_progreso)
+    canvas2.draw()
+    canvas2.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
+
+    # Historial de sesiones (izquierda medio)
+    lbl_historial = ctk.CTkLabel(frame_historial, text="Historial de sesiones", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_historial.pack(pady=(10, 5))
+
+    historial = [
+        ("2024-06-10", "Sentadillas", 10),
+        ("2024-06-09", "Curl Bíceps", 12),
+        ("2024-06-08", "Sentadillas", 8),
+        ("2024-06-07", "Curl Bíceps", 15),
+    ]
+    tree = ttk.Treeview(frame_historial, columns=("Fecha", "Ejercicio", "Reps"), show="headings", height=6)
+    tree.heading("Fecha", text="Fecha")
+    tree.heading("Ejercicio", text="Ejercicio")
+    tree.heading("Reps", text="Reps")
+    for fila in historial:
+        tree.insert("", "end", values=fila)
+    tree.pack(fill="both", expand=True, padx=5, pady=5)
+
+    # Ranking de ejercicios (izquierda abajo)
+    lbl_ranking = ctk.CTkLabel(frame_ranking, text="Ranking de ejercicios", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_ranking.pack(pady=(10, 5))
+
+    ranking = [("Curl Bíceps", 32), ("Sentadillas", 28)]
+    for i, (ej, reps) in enumerate(ranking, 1):
+        lbl = ctk.CTkLabel(frame_ranking, text=f"{i}. {ej} - {reps} reps", font=("Arial", 12), fg_color="#e6eaf8", text_color="#00ADB5" if i == 1 else "#393E46")
+        lbl.pack(anchor="w", padx=20)
+
+    # Consejos personalizados (derecha abajo)
+    lbl_consejos = ctk.CTkLabel(frame_consejos, text="Consejo personalizado", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_consejos.pack(pady=(10, 5))
+
+    consejo = "¡Buen trabajo! Intenta aumentar 2 repeticiones en tu próxima sesión de Sentadillas."
+    lbl_consejo_texto = ctk.CTkLabel(frame_consejos, text=consejo, font=("Arial", 12), fg_color="#e6eaf8", text_color="#393E46", wraplength=220, justify="left")
+    lbl_consejo_texto.pack(padx=10, pady=(0, 10))
+
+    # Botón para cerrar (abajo)
+    btn_cerrar = ctk.CTkButton(
+        ventana_stats,
+        text="Cerrar",
+        fg_color="#00ADB5",
+        text_color="white",
+        command=salir_stats,
+        width=200,
+        height=40,  # <-- Aumenta la altura aquí
+        font=("Arial", 16, "bold")
+    )
+    btn_cerrar.pack(pady=(0, 10))
 
 def main():
     threading.Thread(target=cargar_modelo_y_labels).start()  # Cargar el modelo y etiquetas en un hilo separado
