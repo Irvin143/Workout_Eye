@@ -315,11 +315,17 @@ def interfazInicial():
                                         font=("Arial", 18, "bold"),
                                         corner_radius=20,  # ¡Esto sí redondea!
                                         text_color="black",)
-    btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = 10)
+    btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = (10,0))
+
+    imagen_estadisticas = Image.open(os.path.join(ruta_script, "..", "Imagenes", "estadisticasWorkout.png"))
+    imagen_tk_estadisticas = ImageTk.PhotoImage(imagen_estadisticas)
+    lbl_imagen_estadisticas = ctk.CTkLabel(frameEstadisticas, image=imagen_tk_estadisticas, text="")
+    lbl_imagen_estadisticas.image = imagen_tk_estadisticas  # Mantener una referencia a la imagen
+    lbl_imagen_estadisticas.grid(row=1, column=0, padx=10)
 
     global lbl_repeticiones
     lbl_repeticiones = ctk.CTkLabel(frameEstadisticas, text="Repeticiones: 0 ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
-    lbl_repeticiones.grid(row = 1,column = 0,padx=20, pady=(0, 10), sticky="w")
+    #lbl_repeticiones.grid(row = 2,column = 0,padx=20, pady=(0, 10), sticky="w")
 
     frameCamaras = ctk.CTkFrame(ventanaInicial, corner_radius=20, width=250, height=225,fg_color="#c4d2f4")
     frameCamaras.columnconfigure(0, weight=1)
