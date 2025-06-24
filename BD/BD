@@ -5,7 +5,6 @@ GO
 -- Usar la base de datos
 USE WorkoutEyeDB;
 GO
-
 -- Tabla: Usuarios
 CREATE TABLE Usuarios (
     UsuarioID INT PRIMARY KEY IDENTITY(1,1),
@@ -24,26 +23,15 @@ CREATE TABLE Ejercicios (
 );
 GO
 
--- Tabla: Sesiones
-CREATE TABLE Sesiones (
-    SesionID INT PRIMARY KEY IDENTITY(1,1),
-    UsuarioID INT NOT NULL,
-    Fecha DATETIME DEFAULT GETDATE(),
-    DuracionMinutos INT CHECK (DuracionMinutos >= 0),
-    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
-);
-GO
-
 -- Tabla: EstadisticasEjercicio
 CREATE TABLE EstadisticasEjercicio (
     EstadisticaID INT PRIMARY KEY IDENTITY(1,1),
-    SesionID INT NOT NULL,
+    UsuarioID INT NOT NULL,
     EjercicioID INT NOT NULL,
     Repeticiones INT CHECK (Repeticiones >= 0),
     ErroresPostura INT CHECK (ErroresPostura >= 0),
     PuntajeTecnica DECIMAL(5,2) CHECK (PuntajeTecnica BETWEEN 0 AND 10),
-    TiempoEjercicio INT CHECK (TiempoEjercicio >= 0), -- En segundos
-    FOREIGN KEY (SesionID) REFERENCES Sesiones(SesionID),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID),
     FOREIGN KEY (EjercicioID) REFERENCES Ejercicios(EjercicioID)
 );
 GO

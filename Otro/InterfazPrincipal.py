@@ -242,11 +242,17 @@ def interfazInicial():
     frameSesion.grid(row=0, column=0, columnspan=3,sticky="nsew", padx=20, pady=20)
 
     imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "loginWorkout.png"))
-    lbl_fotoSesion = ctk.CTkLabel(frameSesion, image=ImageTk.PhotoImage(imagen), text="")
-    lbl_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+    imagen_tk_login = ImageTk.PhotoImage(imagen)
+    btn_fotoSesion = ctk.CTkButton(frameSesion, image=imagen_tk_login, 
+                                    text="", width=40, height=40,
+                                    fg_color="transparent",
+                                    hover_color="#a1b9ed",
+                                    command=lambda: interfazInicioSesion())
+    btn_fotoSesion.image = imagen_tk_login  # Mantener referencia
+    btn_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
     lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola, {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
-    lbl_datosSesion.grid(row=0, column=0, padx = (55,0),pady=10, sticky="w")
+    lbl_datosSesion.grid(row=0, column=0, padx = (65,0),pady=10, sticky="w")
 
     imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "campanaWorkout.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
@@ -408,10 +414,89 @@ def mostrar_fecha():
 def mostrar_hora():
     global lbl_hora
     from datetime import datetime
+    import time
     hora_actual = datetime.now().strftime("%H:%M:%S")
     lbl_hora.configure(text=hora_actual)
     # Llama esta función otra vez después de 1000 ms (1 segundo)
     lbl_hora.after(1000, mostrar_hora)
+
+def interfazInicioSesion():
+    # Crear ventana de inicio de sesión
+    ventana_login = ctk.CTk()
+    ventana_login.title("Inicio de Sesión")
+    ventana_login.geometry("500x400")
+    ventana_login.resizable(False, False)
+    centrar_ventana(ventana_login, 500, 400)
+    ventana_login.configure(fg_color="#c4d2f4")
+
+    # Fondo decorativo
+    ruta_script = os.path.dirname(os.path.abspath(__file__))
+    try:
+        fondo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "fondoWorkout.png")).convert("RGBA")
+        fondo = fondo.resize((500, 400))
+        fondo_img = ImageTk.PhotoImage(fondo)
+        lbl_fondo = tk.Label(ventana_login, image=fondo_img, borderwidth=0)
+        lbl_fondo.place(x=0, y=0, relwidth=1, relheight=1)
+        lbl_fondo.image = fondo_img
+    except Exception:
+        pass
+
+    # Marco para el formulario
+    frame_form = ctk.CTkFrame(ventana_login, corner_radius=20, fg_color="#ffffff", width=350, height=300)
+    frame_form.place(relx=0.5, rely=0.5, anchor="center")
+
+    # Logo
+    try:
+        logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png")).convert("RGBA")
+        logo = logo.resize((80, 80))
+        logo_img = ImageTk.PhotoImage(logo)
+        lbl_logo = tk.Label(frame_form, image=logo_img, bg="#ffffff", borderwidth=0)
+        lbl_logo.image = logo_img
+        lbl_logo.pack(pady=(20, 10))
+    except Exception:
+        lbl_logo = tk.Label(frame_form, text="WorkoutEye", font=("Arial", 20, "bold"), bg="#ffffff", fg="#393E46")
+        lbl_logo.pack(pady=(20, 10))
+
+    # Etiqueta de bienvenida
+    lbl_bienvenida = ctk.CTkLabel(frame_form, text="Bienvenido", font=("Arial", 18, "bold"), fg_color="#ffffff", text_color="#393E46")
+    lbl_bienvenida.pack(pady=(0, 10))
+
+    # Campo usuario
+    entry_usuario = ctk.CTkEntry(frame_form, placeholder_text="Usuario", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
+    entry_usuario.pack(padx = 15,pady=10)
+
+    # Campo contraseña
+    entry_contra = ctk.CTkEntry(frame_form, placeholder_text="Contraseña", show="*", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
+    entry_contra.pack(padx = 15,pady=10)
+
+    # Etiqueta de error
+    lbl_error = ctk.CTkLabel(frame_form, text="", font=("Arial", 12), fg_color="#ffffff", text_color="#ff0000")
+    lbl_error.pack()
+
+    # Función de login
+    def login():
+        usuario = entry_usuario.get()
+        contra = entry_contra.get()
+        if usuario and contra:
+            conexion = conectar_bd(usuario, contra)
+            if conexion:
+                ventana_login.destroy()
+                interfazInicial()
+            else:
+                lbl_error.configure(text="Usuario o contraseña incorrectos")
+        else:
+            lbl_error.configure(text="Completa todos los campos")
+
+    # Botón de inicio de sesión
+    btn_login = ctk.CTkButton(frame_form, text="Iniciar Sesión", fg_color="#00ADB5", text_color="white", font=("Arial", 14, "bold"),
+                                width=180, height=40, corner_radius=10, command=login)
+    btn_login.pack(pady=(10, 10))
+
+    # Pie de página
+    lbl_footer = ctk.CTkLabel(frame_form, text="© 2024 WorkoutEye", font=("Arial", 10), fg_color="#ffffff", text_color="#393E46")
+    lbl_footer.pack(side="bottom", pady=(10, 5))
+
+    ventana_login.mainloop()
 
 def main():
     threading.Thread(target=cargar_modelo_y_labels).start()  # Cargar el modelo y etiquetas en un hilo separado
