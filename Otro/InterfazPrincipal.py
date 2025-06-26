@@ -29,21 +29,21 @@ modelo_listo = False
 conexion = conectar_bd()
 nombreUsuario = "Usuario Desconocido"
 password = ""
+usuarioID = None
 # filepath: c:\VisualStudio\Python\WorkoutEye\Otro\InterfazPrincipal.py
 # ...existing code...
 
 CONFIG_FILE = "inicioSesion.json"
-
-def guardar_credenciales(usuario, contra):
+def guardar_credenciales(usuario, contra, usuarioid):
     with open(CONFIG_FILE, "w") as f:
-        json.dump({"usuario": usuario, "contra": contra}, f)
+        json.dump({"usuario": usuario, "contra": contra, "usuarioID": usuarioid}, f)
 
 def cargar_credenciales():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
             data = json.load(f)
-            return data.get("usuario"), data.get("contra")
-    return None, None
+            return data.get("usuario"), data.get("contra"),data.get("usuarioID")
+    return None, None, None
 
 
 def cargar_modelo_y_labels():
@@ -252,7 +252,7 @@ def interfazInicial():
     ventanaInicial.columnconfigure(0, weight=1)
     ventanaInicial.columnconfigure(1, weight=1)
     ventanaInicial.columnconfigure(2, weight=1)
-    ventanaInicial.overrideredirect(True)  # Elimina la barra de título
+    #ventanaInicial.overrideredirect(True)  # Elimina la barra de título
 
     #Parte de arriba de la sesion
     frameSesion = ctk.CTkFrame(ventanaInicial, corner_radius=20, height=100,fg_color="#c4d2f4")
@@ -442,6 +442,7 @@ def mostrar_hora():
     lbl_hora.configure(text=hora_actual)
     # Llama esta función otra vez después de 1000 ms (1 segundo)
     lbl_hora.after(1000, mostrar_hora)
+
 def interfazInicioSesion():
     # Crear ventana de inicio de sesión
     ventana_login = ctk.CTk()
@@ -498,14 +499,14 @@ def interfazInicioSesion():
 
     # Función de login
     def login(event=None):  # acepta event para el bind
-        usuarioaid = None
+        usuarioid = None
         usuario = entry_usuario.get()
         contra = entry_contra.get()
         if usuario and contra:
-            usuarioaid = grabarUsuario(conexion, usuario, contra, "M", 0)  # Genero y edad por defecto
-            print(f"Usuario insertado con ID: {usuarioaid}")
-            if usuarioaid is not None:
-                guardar_credenciales(usuario, contra)
+            usuarioid = grabarUsuario(conexion, usuario, contra, "M", 0)  # Genero y edad por defecto
+            print(f"Usuario insertado con ID: {usuarioid}")
+            if usuarioid is not None:
+                guardar_credenciales(usuario, contra,usuarioid)
                 ventana_login.destroy()
                 interfazInicial()
             else:
@@ -534,6 +535,23 @@ def mostrar_estadisticas():
     from datetime import datetime, timedelta
 
     # Ventana de estadísticas a pantalla completa
+    global conexion, usuarioID
+    diccEstadisticas = []
+    historial = []
+    repeticiones, erroresPostura, puntajeTecnica,nombreEjercicio = [],[],[],[]
+    diccEstadisticas = consultar_estadisticas(conexion, usuarioID)
+
+    for estadistica in diccEstadisticas:
+        repeticiones.append(int(estadistica['Repeticiones']))
+        erroresPostura.append(estadistica['ErroresPostura'])
+        puntajeTecnica.append(estadistica['PuntajeTecnica'])
+        nombreEjercicio.append(estadistica['NombreEjercicio'])
+        historial.append((
+            "24-06-2025",  # fecha vacía
+            estadistica['NombreEjercicio'],
+            int(estadistica['Repeticiones'])
+        ))
+
     ventana_stats = ctk.CTkToplevel()
     ventana_stats.title("Estadísticas de Ejercicios")
     # Maximiza la ventana pero sin quitar la barra de título ni poner fullscreen real
@@ -584,15 +602,15 @@ def mostrar_estadisticas():
     frame_consejos.grid(row=3, column=1, sticky="nsew", padx=(0, 10), pady=(5, 10))
 
     # Simulación de datos (reemplaza con tus datos reales)
-    ejercicios = ["Sentadillas", "Curl Bíceps"]
-    repeticiones = [15, 20]
+    #ejercicios = ["Sentadillas", "Curl Bíceps"]
     tiempo_total = "00:25:30"
+    #repeticiones = [random.randint(5, 20) for _ in ejercicios]
     fecha_ultima = "2024-06-10"
-    mejor_ejercicio = ejercicios[repeticiones.index(max(repeticiones))]
+    mejor_ejercicio = nombreEjercicio[repeticiones.index(max(repeticiones))]
 
     # Crear figura de matplotlib
     fig, ax = plt.subplots(figsize=(4, 3), dpi=100)
-    barras = ax.bar(ejercicios, repeticiones, color=["#00ADB5", "#393E46"])
+    barras = ax.bar(nombreEjercicio, repeticiones, color=["#00ADB5", "#393E46"])
     ax.set_ylabel("Repeticiones")
     ax.set_title("Repeticiones por ejercicio")
     ax.set_ylim(0, max(repeticiones) + 5)
@@ -621,7 +639,7 @@ def mostrar_estadisticas():
     lbl_resumen.pack(pady=(10, 5))
     lbl_total = ctk.CTkLabel(frame_resumen, text=f"Total de repeticiones: {sum(repeticiones)}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
     lbl_total.pack(pady=5)
-    lbl_ejercicios = ctk.CTkLabel(frame_resumen, text=f"Ejercicios realizados: {len(ejercicios)}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_ejercicios = ctk.CTkLabel(frame_resumen, text=f"Ejercicios realizados: {len(nombreEjercicio)}", font=("Arial", 13), fg_color="#e6eaf8", text_color="#393E46")
     lbl_ejercicios.pack(pady=5)
 
     # Progreso semanal (derecha abajo)
@@ -645,12 +663,6 @@ def mostrar_estadisticas():
     lbl_historial = ctk.CTkLabel(frame_historial, text="Historial de sesiones", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
     lbl_historial.pack(pady=(10, 5))
 
-    historial = [
-        ("2024-06-10", "Sentadillas", 10),
-        ("2024-06-09", "Curl Bíceps", 12),
-        ("2024-06-08", "Sentadillas", 8),
-        ("2024-06-07", "Curl Bíceps", 15),
-    ]
     tree = ttk.Treeview(frame_historial, columns=("Fecha", "Ejercicio", "Reps"), show="headings", height=6)
     tree.heading("Fecha", text="Fecha")
     tree.heading("Ejercicio", text="Ejercicio")
@@ -690,9 +702,9 @@ def mostrar_estadisticas():
     btn_cerrar.pack(pady=(0, 10))
 
 def main():
-    global nombreUsuario, password
+    global nombreUsuario, password, usuarioID
     threading.Thread(target=cargar_modelo_y_labels).start()
-    nombreUsuario, password = cargar_credenciales()
+    nombreUsuario, password,usuarioID = cargar_credenciales()
     if nombreUsuario and password:
         conexion = conectar_bd()
         if conexion:

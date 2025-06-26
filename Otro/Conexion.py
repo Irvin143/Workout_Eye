@@ -53,22 +53,29 @@ def consultar_estadisticas(conexion, usuarioID):
     try:
         cursor = conexion.cursor()
         cursor.execute("""
-            SELECT Repeticiones, ErroresPostura, PuntajeTecnica
-            FROM EstadisticasEjercicio
-            WHERE UsuarioID = ?
+            SELECT ee.Repeticiones,ee.ErroresPostura,PuntajeTecnica,e.Nombre
+            FROM Usuarios u
+            INNER JOIN EstadisticasEjercicio ee ON u.UsuarioID = ee.UsuarioID
+            inner join Ejercicios e on e.EjercicioID = ee.EjercicioID
+            WHERE u.UsuarioID = ?
         """, (usuarioID,))
-        fila = cursor.fetchone()
-        if fila:
-            return {
-                "Repeticiones": fila[0],
-                "ErroresPostura": fila[1],
-                "PuntajeTecnica": float(fila[2])
-            }
+        filas = cursor.fetchall()
+        if filas:
+            # Devuelve una lista de diccionarios, uno por cada fila encontrada
+            return [
+                {
+                    "Repeticiones": fila[0],
+                    "ErroresPostura": fila[1],
+                    "PuntajeTecnica": float(fila[2]),
+                    "NombreEjercicio": fila[3]
+                }
+                for fila in filas
+            ]
         else:
-            return None
+            return []
     except Exception as e:
         print("❌ Error al consultar estadísticas:", e)
-        return None
+        return []
 
 def aumentar_repeticiones(conexion, usuarioID, incremento, ErroresPostura, PuntajeTecnica):
     try:
