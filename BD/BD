@@ -5,10 +5,12 @@ GO
 -- Usar la base de datos
 USE WorkoutEyeDB;
 GO
+
 -- Tabla: Usuarios
 CREATE TABLE Usuarios (
     UsuarioID INT PRIMARY KEY IDENTITY(1,1),
     Nombre VARCHAR(100) NOT NULL,
+    contrasena VARCHAR(100) NOT NULL,
     Genero CHAR(1) CHECK (Genero IN ('M', 'F', 'O')),
     Edad INT CHECK (Edad >= 0),
     FechaRegistro DATETIME DEFAULT GETDATE()
@@ -34,4 +36,42 @@ CREATE TABLE EstadisticasEjercicio (
     FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID),
     FOREIGN KEY (EjercicioID) REFERENCES Ejercicios(EjercicioID)
 );
+GO
+
+-- Procedimiento para insertar o actualizar Usuarios
+CREATE OR ALTER PROC sp_grabar_usuario
+    @UsuarioID INT OUTPUT,
+    @Nombre VARCHAR(100),
+    @contrasena VARCHAR(100),
+    @Genero CHAR(1),
+    @Edad INT
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Usuarios WHERE UsuarioID = @UsuarioID)
+    BEGIN
+        UPDATE Usuarios
+        SET Nombre = @Nombre,
+            contrasena = @contrasena,
+            Genero = @Genero,
+            Edad = @Edad
+        WHERE UsuarioID = @UsuarioID;
+
+        IF @@ERROR <> 0
+        BEGIN
+            RAISERROR('Error al actualizar en la tabla Usuarios', 16, 10);
+        END
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Usuarios (Nombre, contrasena, Genero, Edad)
+        VALUES (@Nombre, @contrasena, @Genero, @Edad);
+
+        IF @@ERROR <> 0
+        BEGIN
+            RAISERROR('Error al insertar en la tabla Usuarios', 16, 10);
+        END
+
+        SELECT @UsuarioID = SCOPE_IDENTITY()
+    END
+END
 GO

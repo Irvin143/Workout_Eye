@@ -16,12 +16,35 @@ import pickle
 from Predecir import convertir_landmarks_a_diccionario
 from Predecir import main as predecirMain
 from EvaluarEjericios import *
+from Conexion import *
 from pygrabber.dshow_graph import FilterGraph
+import json
+import os
 
 # Variables globales
 model = None
 le = None
 modelo_listo = False
+
+conexion = conectar_bd()
+nombreUsuario = "Usuario Desconocido"
+password = ""
+# filepath: c:\VisualStudio\Python\WorkoutEye\Otro\InterfazPrincipal.py
+# ...existing code...
+
+CONFIG_FILE = "inicioSesion.json"
+
+def guardar_credenciales(usuario, contra):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump({"usuario": usuario, "contra": contra}, f)
+
+def cargar_credenciales():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("usuario"), data.get("contra")
+    return None, None
+
 
 def cargar_modelo_y_labels():
     global model, le, modelo_listo
@@ -217,11 +240,8 @@ def centrar_ventana(ventana, ancho, alto):
     ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
 
 def interfazInicial():
-    global lbl_hora,ventanaInicial, frameCamaras, opcion
+    global lbl_hora,ventanaInicial, frameCamaras, opcion,nombreUsuario
 
-    nombreUsuario = "Irvin"
-    conexion = conectar_bd(nombreUsuario, "123")
-    
     # Obtener la ruta absoluta del script
     ruta_script = os.path.dirname(os.path.abspath(__file__))
 
@@ -250,6 +270,8 @@ def interfazInicial():
                                     command=lambda: interfazInicioSesion())
     btn_fotoSesion.image = imagen_tk_login  # Mantener referencia
     btn_fotoSesion.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+
 
     lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola, {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
     lbl_datosSesion.grid(row=0, column=0, padx = (65,0),pady=10, sticky="w")
@@ -465,6 +487,7 @@ def interfazInicioSesion():
     # Campo usuario
     entry_usuario = ctk.CTkEntry(frame_form, placeholder_text="Usuario", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
     entry_usuario.pack(padx = 15,pady=10)
+    entry_usuario.focus_set()  # <-- Aquí se da el foco al campo de usuario
 
     # Campo contraseña
     entry_contra = ctk.CTkEntry(frame_form, placeholder_text="Contraseña", show="*", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
@@ -476,11 +499,14 @@ def interfazInicioSesion():
 
     # Función de login
     def login():
+        usuarioaid = None
         usuario = entry_usuario.get()
         contra = entry_contra.get()
         if usuario and contra:
-            conexion = conectar_bd(usuario, contra)
-            if conexion:
+            usuarioaid = grabarUsuario(conexion, usuario, contra, "M", 0)  # Genero y edad por defecto
+            print(f"Usuario insertado con ID: {usuarioaid}")
+            if usuarioaid is not None:
+                guardar_credenciales(usuario, contra)
                 ventana_login.destroy()
                 interfazInicial()
             else:
@@ -496,9 +522,9 @@ def interfazInicioSesion():
     # Pie de página
     lbl_footer = ctk.CTkLabel(frame_form, text="© 2024 WorkoutEye", font=("Arial", 10), fg_color="#ffffff", text_color="#393E46")
     lbl_footer.pack(side="bottom", pady=(10, 5))
-
-    ventana_login.mainloop()
     
+    ventana_login.mainloop()
+
 def mostrar_estadisticas():
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -662,8 +688,17 @@ def mostrar_estadisticas():
     btn_cerrar.pack(pady=(0, 10))
 
 def main():
-    threading.Thread(target=cargar_modelo_y_labels).start()  # Cargar el modelo y etiquetas en un hilo separado
+    global nombreUsuario, password
+    threading.Thread(target=cargar_modelo_y_labels).start()
+    nombreUsuario, password = cargar_credenciales()
+    if nombreUsuario and password:
+        conexion = conectar_bd()
+        if conexion:
+            interfazInicial()
+            return
+    
     interfazInicial()
+
 
 if __name__ == "__main__":
     main()

@@ -1,30 +1,50 @@
 import pyodbc
 
-def conectar_bd(nombreUsuario,contraseña):
+def conectar_bd():
     try:
         conexion = pyodbc.connect(
             f'DRIVER={{ODBC Driver 17 for SQL Server}};'
             f'SERVER=localhost;'
-            f'DATABASE=ventas;'
-            f'UID={nombreUsuario};'
-            f'PWD={contraseña};'
+            f'DATABASE=WorkoutEyeDB;'
+            f'UID=irvin;'
+            f'PWD=123;'
         )
         return conexion
     except Exception as e:
         print("❌ Error al conectar a la base de datos:", e)
         return None
     
-
-def insertar_usuario(conexion, nombre, genero, edad):
+def consultarUsuario(conexion,usuarioId,password):
     try:
         cursor = conexion.cursor()
         cursor.execute("""
-            INSERT INTO Usuarios (Nombre, Genero, Edad)
-            VALUES (?, ?, ?)
-        """, (nombre, genero, edad))
+            SELECT usuarioId
+            FROM Usuarios
+            WHERE UsuarioID = ?
+            AND Password = ?
+        """, (usuarioId,password))
+        fila = cursor.fetchone()
+        if fila:
+            return fila[0] # Retorna el ID del usuario si existe
+        else:
+            return None
+    except Exception as e:
+        print("❌ Error al consultar nombre de usuario:", e)
+        return None
+
+def grabarUsuario(conexion, nombre, contrasena, genero, edad):
+    try:
+        cursor = conexion.cursor()
+        # Si usuarioId es None, pásalo como None para el OUTPUT
+        cursor.execute("""
+            DECLARE @usuarioID INT;
+            EXEC sp_grabar_usuario @UsuarioID = @usuarioID OUTPUT, @Nombre=?, @Contrasena=?, @Genero=?, @Edad=?;
+            SELECT @usuarioID;
+        """, (nombre, contrasena, genero, edad))
+        last_id = cursor.fetchone()[0]
         conexion.commit()
-        print("✅ Usuario insertado correctamente")
-        return cursor.lastrowid  # ID del nuevo usuario
+        print("✅ Usuario insertado correctamente con ID:", last_id)
+        return last_id
     except Exception as e:
         print("❌ Error al insertar usuario:", e)
         return None
