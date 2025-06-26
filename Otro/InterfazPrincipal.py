@@ -277,7 +277,7 @@ def interfazInicial():
 
     imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "campanaWorkout.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
-    btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9")
+    btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9",command=lambda: mostrar_notificaciones())
     btn_notificaciones.grid(row=0, column=2, padx=10, pady=10, sticky="e")
 
     frameLogo = ctk.CTkFrame(ventanaInicial, corner_radius=20, height=180)
@@ -444,24 +444,16 @@ def mostrar_hora():
 
 def interfazInicioSesion():
     # Crear ventana de inicio de sesión
-    ventana_login = ctk.CTk()
+    ventana_login = ctk.CTkToplevel()
     ventana_login.title("Inicio de Sesión")
-    ventana_login.geometry("500x400")
     ventana_login.resizable(False, False)
-    centrar_ventana(ventana_login, 500, 400)
+    ventana_login.grab_set()
+    ventana_login.focus_force()
+    centrar_ventana(ventana_login, 450, 550)
     ventana_login.configure(fg_color="#c4d2f4")
 
     # Fondo decorativo
     ruta_script = os.path.dirname(os.path.abspath(__file__))
-    try:
-        fondo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "fondoWorkout.png")).convert("RGBA")
-        fondo = fondo.resize((500, 400))
-        fondo_img = ImageTk.PhotoImage(fondo)
-        lbl_fondo = tk.Label(ventana_login, image=fondo_img, borderwidth=0)
-        lbl_fondo.place(x=0, y=0, relwidth=1, relheight=1)
-        lbl_fondo.image = fondo_img
-    except Exception:
-        pass
 
     # Marco para el formulario
     frame_form = ctk.CTkFrame(ventana_login, corner_radius=20, fg_color="#ffffff", width=350, height=300)
@@ -469,8 +461,7 @@ def interfazInicioSesion():
 
     # Logo
     try:
-        logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png")).convert("RGBA")
-        logo = logo.resize((80, 80))
+        logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png"))
         logo_img = ImageTk.PhotoImage(logo)
         lbl_logo = tk.Label(frame_form, image=logo_img, bg="#ffffff", borderwidth=0)
         lbl_logo.image = logo_img
@@ -524,8 +515,6 @@ def interfazInicioSesion():
     # Pie de página
     lbl_footer = ctk.CTkLabel(frame_form, text="© 2024 WorkoutEye", font=("Arial", 10), fg_color="#ffffff", text_color="#393E46")
     lbl_footer.pack(side="bottom", pady=(10, 5))
-    
-    ventana_login.mainloop()
 
 def mostrar_estadisticas():
     import matplotlib.pyplot as plt
@@ -552,6 +541,8 @@ def mostrar_estadisticas():
         ))
 
     ventana_stats = ctk.CTkToplevel()
+    ventana_stats.grab_set()
+    ventana_stats.focus_force()
     ventana_stats.title("Estadísticas de Ejercicios")
     # Maximiza la ventana pero sin quitar la barra de título ni poner fullscreen real
     ventana_stats.state('zoomed')  # Para Windows: maximiza la ventana
@@ -698,6 +689,36 @@ def mostrar_estadisticas():
         font=("Arial", 16, "bold")
     )
     btn_cerrar.pack(pady=(0, 10))
+
+#Ventana emergente de notificaciones/noticias
+def mostrar_notificaciones():
+    ventana_popup = ctk.CTkToplevel()
+    ventana_popup.title("Notificaciones")
+    ventana_popup.grab_set()
+    ventana_popup.focus_force()
+    ventana_popup.resizable(False, False)
+    ventana_popup.configure(fg_color="#e6eaf8")
+    ventana_popup.overrideredirect(True)  # Elimina la barra de título
+    centrar_ventana(ventana_popup, 400, 300)
+
+
+    lbl_titulo = ctk.CTkLabel(ventana_popup, text="Noticias y Notificaciones", font=("Arial", 16, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_titulo.pack(pady=(20, 10))
+
+    # Aquí puedes agregar tus noticias/notificaciones
+    noticias = [
+        "¡Nuevo ejercicio disponible: Press de banca!",
+        "Recuerda mantener una buena postura durante tus entrenamientos.",
+        "Actualización: Mejoras en la detección de repeticiones.",
+        "¡Sigue así! Tu progreso es excelente."
+    ]
+    for noticia in noticias:
+        lbl_noticia = ctk.CTkLabel(ventana_popup, text=f"• {noticia}", font=("Arial", 12), fg_color="#e6eaf8", text_color="#393E46", wraplength=350, justify="left")
+        lbl_noticia.pack(anchor="w", padx=20, pady=2)
+
+    btn_cerrar_popup = ctk.CTkButton(ventana_popup, text="Cerrar", fg_color="#00ADB5", text_color="white", command=ventana_popup.destroy)
+    btn_cerrar_popup.pack(pady=20)
+
 
 def main():
     global nombreUsuario, password, usuarioID
