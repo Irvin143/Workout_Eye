@@ -244,7 +244,7 @@ def interfazInicial():
     # Obtener la ruta absoluta del script
     ruta_script = os.path.dirname(os.path.abspath(__file__))
 
-    ventanaInicial = ctk.CTk(fg_color="#FFFFFF")  # Fondo oscuro
+    ventanaInicial = ctk.CTk(fg_color="#000000")  # Fondo oscuro
     ventanaInicial.title("Interfaz Secundaria")
 
     centrar_ventana(ventanaInicial, 1000, 800)  # Centrar ventana
@@ -528,6 +528,14 @@ def mostrar_estadisticas():
     historial = []
     repeticiones, erroresPostura, puntajeTecnica,nombreEjercicio = [],[],[],[]
     diccEstadisticas = consultar_estadisticas(conexion, usuarioID)
+    
+    # Obtener los dos ejercicios con más repeticiones
+    top_ejercicios = sorted(diccEstadisticas, key=lambda x: int(x['Repeticiones']), reverse=True)[:2]
+    ranking = []
+    for ejercicio in top_ejercicios:
+        nombre = ejercicio['NombreEjercicio']
+        reps = int(ejercicio['Repeticiones'])
+        ranking.append((nombre, reps))
 
     for estadistica in diccEstadisticas:
         repeticiones.append(int(estadistica['Repeticiones']))
@@ -664,7 +672,6 @@ def mostrar_estadisticas():
     lbl_ranking = ctk.CTkLabel(frame_ranking, text="Ranking de ejercicios", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
     lbl_ranking.pack(pady=(10, 5))
 
-    ranking = [("Curl Bíceps", 32), ("Sentadillas", 28)]
     for i, (ej, reps) in enumerate(ranking, 1):
         lbl = ctk.CTkLabel(frame_ranking, text=f"{i}. {ej} - {reps} reps", font=("Arial", 12), fg_color="#e6eaf8", text_color="#00ADB5" if i == 1 else "#393E46")
         lbl.pack(anchor="w", padx=20)
@@ -723,13 +730,9 @@ def mostrar_notificaciones():
 def main():
     global nombreUsuario, password, usuarioID
     threading.Thread(target=cargar_modelo_y_labels).start()
-    nombreUsuario, password,usuarioID = cargar_credenciales()
-    if nombreUsuario and password:
-        conexion = conectar_bd()
-        if conexion:
-            interfazInicial()
-            return
-    
+
+    nombreUsuario, password, usuarioID = cargar_credenciales()
+
     interfazInicial()
 
 
