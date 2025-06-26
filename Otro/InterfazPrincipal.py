@@ -442,7 +442,6 @@ def mostrar_hora():
     lbl_hora.configure(text=hora_actual)
     # Llama esta función otra vez después de 1000 ms (1 segundo)
     lbl_hora.after(1000, mostrar_hora)
-
 def interfazInicioSesion():
     # Crear ventana de inicio de sesión
     ventana_login = ctk.CTk()
@@ -483,11 +482,11 @@ def interfazInicioSesion():
     # Etiqueta de bienvenida
     lbl_bienvenida = ctk.CTkLabel(frame_form, text="Bienvenido", font=("Arial", 18, "bold"), fg_color="#ffffff", text_color="#393E46")
     lbl_bienvenida.pack(pady=(0, 10))
-
     # Campo usuario
     entry_usuario = ctk.CTkEntry(frame_form, placeholder_text="Usuario", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
     entry_usuario.pack(padx = 15,pady=10)
-    entry_usuario.focus_set()  # <-- Aquí se da el foco al campo de usuario
+    # Dar el foco automáticamente al campo de usuario al abrir la ventana
+    ventana_login.after(100, entry_usuario.focus_set)
 
     # Campo contraseña
     entry_contra = ctk.CTkEntry(frame_form, placeholder_text="Contraseña", show="*", width=220, height=35, corner_radius=10, fg_color="#e6eaf8", text_color="#393E46")
@@ -498,7 +497,7 @@ def interfazInicioSesion():
     lbl_error.pack()
 
     # Función de login
-    def login():
+    def login(event=None):  # acepta event para el bind
         usuarioaid = None
         usuario = entry_usuario.get()
         contra = entry_contra.get()
@@ -518,6 +517,9 @@ def interfazInicioSesion():
     btn_login = ctk.CTkButton(frame_form, text="Iniciar Sesión", fg_color="#00ADB5", text_color="white", font=("Arial", 14, "bold"),
                                 width=180, height=40, corner_radius=10, command=login)
     btn_login.pack(pady=(10, 10))
+
+    # Vincular Enter a la función de login
+    ventana_login.bind('<Return>', login)
 
     # Pie de página
     lbl_footer = ctk.CTkLabel(frame_form, text="© 2024 WorkoutEye", font=("Arial", 10), fg_color="#ffffff", text_color="#393E46")
