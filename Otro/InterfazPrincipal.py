@@ -73,6 +73,7 @@ def mostrar_camara():
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
+    estadisticas = []  # Lista para almacenar las estadísticas
     nombre_ejercicio = "Desconocido"
     keypoints = []  # Lista para almacenar los keypoints
 
@@ -87,9 +88,10 @@ def mostrar_camara():
 
     lbl_video = tk.Label(ventana_camara)
     lbl_video.pack()
-
     def cerrar_camara():
-        actualizar_estadisticas(conexion, usuarioID, nombre_ejercicio, repeticiones, len(zonaError), 10)
+        # Actualiza las estadísticas de todos los ejercicios realizados en la sesión
+        for est in estadisticas:
+            actualizar_estadisticas(conexion, usuarioID, est["nombre"], est["repeticiones"], len(zonaError), 10)
         cap.release()
         ventana_camara.destroy()
 
@@ -97,7 +99,7 @@ def mostrar_camara():
     btn_cerrar.pack(pady=10)
 
     def actualizar_frame():
-        global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo
+        global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
         if not ret:
@@ -119,21 +121,31 @@ def mostrar_camara():
             keypoints.append(puntos)
 
             evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError)
-
             if len(keypoints) == ventana_tamaño:
                 zonaError = []
+                repeticionesAux = 0
                 nombre_ejercicio = predecir_ejercicio(keypoints)
                 match nombre_ejercicio:
                     case "squat":
-                        zonaError = evaluar_sentadilla(keypoints_cuerpo)
+                        zonaError, repeticionesAux = evaluar_sentadilla(keypoints_cuerpo)
                     case "barbell biceps curl":
-                        repeticionesAux = 0
                         zonaError, repeticionesAux = evaluar_curl_biceps(keypoints_cuerpo)
-                        repeticiones += repeticionesAux
-                        lbl_repeticiones.configure(text=f"Repeticiones: {repeticiones}")
                     case _:
                         zonaError = []
+                repeticiones += repeticionesAux
+                lbl_repeticiones.configure(text=f"Repeticiones: {repeticiones}")
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
+                # Actualizar la lista de estadísticas
+                # Buscar si ya existe el ejercicio en la lista
+                encontrado = False
+                for est in estadisticas:
+                    if est["nombre"] == nombre_ejercicio:
+                        est["repeticiones"] += repeticionesAux
+                        encontrado = True
+                        break
+                if not encontrado and nombre_ejercicio != "Desconocido":
+                    estadisticas.append({"nombre": nombre_ejercicio, "repeticiones": repeticionesAux})
+
                 keypoints.clear()
                 keypoints_cuerpo.clear()
 
@@ -174,7 +186,15 @@ def predecir_ejercicio(keypoints):
     X = np.array(keypoints)
 
     print("Realizando predicciones...")
+    confianza = 0.0
     preds = model.predict(X)
+    confianza = max(preds[0])
+
+    print(f"Confianza de la predicción: {confianza:.2f}")
+
+    if confianza < 0.6:
+        return "sin_deteccion"
+
     clases_pred = np.argmax(preds, axis=1)
 
     clase_mayoritaria = Counter(clases_pred).most_common(1)[0][0]
