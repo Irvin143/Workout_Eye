@@ -130,21 +130,27 @@ def subir_video():
 
             X.extend(kp)
             y.extend([etiqueta] * len(kp))  # Cambia "etiqueta" por la etiqueta correspondiente al video
-    '''
-        X = np.array(X)
-        y = np.array(y)
-        Angulos_desicion = np.array(Angulos_desicion)
-        Angulos_rodilla = np.array(Angulos_rodilla)
+'''
+        datos_dir = "datos"
+        os.makedirs(datos_dir, exist_ok=True)
+        x_path = os.path.join(datos_dir, "X.npy")
+        y_path = os.path.join(datos_dir, "y.npy")
 
-        os.makedirs("datos", exist_ok=True)
-        np.save("datos/X.npy", X)
-        np.save("datos/y.npy", y)
+        if os.path.exists(x_path) and os.path.exists(y_path):
+            print("Cargando datos existentes...")
+            X_existente = np.load(x_path)
+            y_existente = np.load(y_path)
+            X = np.concatenate([X_existente, X], axis=0)
+            y = np.concatenate([y_existente, y], axis=0)
+        else:
+            print("No se encontraron datos existentes, creando nuevos archivos.")
+            X = np.array(X)
+            y = np.array(y)
 
-        np.save("datos/angulos_rodilla.npy", Angulos_rodilla)
-        np.save("datos/angulos_desicion.npy", Angulos_desicion)
-        
+        np.save(x_path, X)
+        np.save(y_path, y)
+
         print(f"Valores extraídos: {X.shape}, {y.shape}")
-
         print(f"Datos guardados en la carpeta 'datos'. Tamaño X: {X.shape}, y: {y.shape}")
 
 def iniciar_busqueda_en_hilo(): 
