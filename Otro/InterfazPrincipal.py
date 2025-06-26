@@ -69,7 +69,7 @@ def detectar_camaras():
     return camaras_disponibles
 
 def mostrar_camara():
-    global   nombre_ejercicio, zonaError,animar,repeticiones,keypoints_cuerpo
+    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
@@ -78,18 +78,26 @@ def mostrar_camara():
 
     cam_index = int(opcion.get())  # Obtener el índice de la cámara seleccionada
     cap = cv2.VideoCapture(cam_index)
-    pose = mp.solutions.pose.Pose(static_image_mode = False)
-    
+    pose = mp.solutions.pose.Pose(static_image_mode=False)
+
     animar = False
     ventana_camara = tk.Toplevel()
     ventana_camara.title("Procesando cámara")
     ventana_camara.geometry("800x600")
-    
+
     lbl_video = tk.Label(ventana_camara)
     lbl_video.pack()
 
+    def cerrar_camara():
+        actualizar_estadisticas(conexion, usuarioID, nombre_ejercicio, repeticiones, len(zonaError), 10)
+        cap.release()
+        ventana_camara.destroy()
+
+    btn_cerrar = tk.Button(ventana_camara, text="Cerrar cámara", command=cerrar_camara, bg="#00ADB5", fg="white", font=("Arial", 12, "bold"))
+    btn_cerrar.pack(pady=10)
+
     def actualizar_frame():
-        global nombre_ejercicio,zonaError, frame_rgb,repeticiones,lbl_repeticiones,keypoints_cuerpo
+        global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
         if not ret:
@@ -100,24 +108,17 @@ def mostrar_camara():
         results = pose.process(frame_rgb)
 
         if results.pose_landmarks:
-            #mp.solutions.drawing_utils.draw_landmarks(
-            #    frame_rgb, results.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS
-            #)
-            # Obtener las coordenadas de la rodilla derecha
             altura, ancho, _ = frame.shape
             landmarks = results.pose_landmarks.landmark
-            # Extraer keypoints de los landmarks    
             puntos = []
             for lm in results.pose_landmarks.landmark:
                 puntos.extend([lm.x, lm.y, lm.z])
-            
+
             keyCuerpo = convertir_landmarks_a_diccionario(results)
-            # Keypoints_cuerpo es un diccionario con las coordenadas de los landmarks
             keypoints_cuerpo.append(keyCuerpo)
-            #keypoints son los puntos en formato lista
             keypoints.append(puntos)
 
-            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError)
 
             if len(keypoints) == ventana_tamaño:
                 zonaError = []
@@ -129,14 +130,12 @@ def mostrar_camara():
                         repeticionesAux = 0
                         zonaError, repeticionesAux = evaluar_curl_biceps(keypoints_cuerpo)
                         repeticiones += repeticionesAux
-                        lbl_repeticiones.configure(text = f"Repeticiones: {repeticiones}")
+                        lbl_repeticiones.configure(text=f"Repeticiones: {repeticiones}")
                     case _:
                         zonaError = []
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
-                # Reiniciar ventana para siguiente predicción
                 keypoints.clear()
                 keypoints_cuerpo.clear()
-            
 
         img = Image.fromarray(frame_rgb)
         imgtk = ImageTk.PhotoImage(image=img)
@@ -556,7 +555,6 @@ def mostrar_estadisticas():
     ventana_stats.title("Estadísticas de Ejercicios")
     # Maximiza la ventana pero sin quitar la barra de título ni poner fullscreen real
     ventana_stats.state('zoomed')  # Para Windows: maximiza la ventana
-    # ventana_stats.attributes('-fullscreen', True)  # No usar fullscreen real para no ocultar barra de título
     ventana_stats.configure(fg_color="#c4d2f4")
 
     # Botón para salir/cerrar estadísticas

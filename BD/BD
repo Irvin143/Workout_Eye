@@ -37,6 +37,50 @@ CREATE TABLE EstadisticasEjercicio (
     FOREIGN KEY (EjercicioID) REFERENCES Ejercicios(EjercicioID)
 );
 GO
+-- Procedimiento para insertar o actualizar EstadisticasEjercicio
+CREATE OR ALTER PROC sp_actualizar_estadisticas_ejercicio
+    @UsuarioID INT,
+    @nombre varchar(100),
+    @Repeticiones INT,
+    @ErroresPostura INT,
+    @PuntajeTecnica DECIMAL(5,2)
+AS
+BEGIN
+
+    DECLARE @EjercicioID INT;
+    select @EjercicioID = EjercicioID from Ejercicios where Nombre = @nombre;
+	if @EjercicioID IS NULL
+    BEGIN
+        RAISERROR('El ejercicio no existe', 16, 1);
+    END
+    IF EXISTS (
+        SELECT 1 FROM EstadisticasEjercicio
+        WHERE UsuarioID = @UsuarioID AND EjercicioID = @EjercicioID
+    )
+    BEGIN
+        UPDATE EstadisticasEjercicio
+        SET Repeticiones = Repeticiones + @Repeticiones,
+            ErroresPostura = ErroresPostura + @ErroresPostura,
+            PuntajeTecnica = (PuntajeTecnica + @PuntajeTecnica) / 2
+        WHERE UsuarioID = @UsuarioID AND EjercicioID = @EjercicioID;
+
+        IF @@ERROR <> 0
+        BEGIN
+            RAISERROR('Error al actualizar EstadisticasEjercicio', 16, 10);
+        END
+    END
+    ELSE
+    BEGIN
+        INSERT INTO EstadisticasEjercicio (UsuarioID, EjercicioID, Repeticiones, ErroresPostura, PuntajeTecnica)
+        VALUES (@UsuarioID, @EjercicioID, @Repeticiones, @ErroresPostura, @PuntajeTecnica);
+
+        IF @@ERROR <> 0
+        BEGIN
+            RAISERROR('Error al insertar en EstadisticasEjercicio', 16, 10);
+        END
+    END
+END
+GO
 
 -- Procedimiento para insertar o actualizar Usuarios
 CREATE OR ALTER PROC sp_grabar_usuario
@@ -47,22 +91,15 @@ CREATE OR ALTER PROC sp_grabar_usuario
     @Edad INT
 AS
 BEGIN
-    IF EXISTS (SELECT 1 FROM Usuarios WHERE UsuarioID = @UsuarioID)
+    SET NOCOUNT ON;
+    IF @UsuarioID IS NULL  or @UsuarioID = 0
     BEGIN
-        UPDATE Usuarios
-        SET Nombre = @Nombre,
-            contrasena = @contrasena,
-            Genero = @Genero,
-            Edad = @Edad
-        WHERE UsuarioID = @UsuarioID;
-
-        IF @@ERROR <> 0
+        -- Verificar si ya existe un usuario con el mismo nombre
+        IF EXISTS (SELECT 1 FROM Usuarios WHERE Nombre = @Nombre)
         BEGIN
-            RAISERROR('Error al actualizar en la tabla Usuarios', 16, 10);
+            RAISERROR('Ya existe un usuario con ese nombre', 16, 1);
         END
-    END
-    ELSE
-    BEGIN
+
         INSERT INTO Usuarios (Nombre, contrasena, Genero, Edad)
         VALUES (@Nombre, @contrasena, @Genero, @Edad);
 
@@ -71,7 +108,13 @@ BEGIN
             RAISERROR('Error al insertar en la tabla Usuarios', 16, 10);
         END
 
-        SELECT @UsuarioID = SCOPE_IDENTITY()
+        set @UsuarioID = SCOPE_IDENTITY()
     END
 END
-GO
+go
+
+-- Consulta: UsuarioID y Repeticiones usando INNER JOIN
+SELECT u.UsuarioID, ee.Repeticiones,e.Nombre,e.EjercicioID
+FROM Usuarios u
+INNER JOIN EstadisticasEjercicio ee ON u.UsuarioID = ee.UsuarioID
+inner join Ejercicios e on e.EjercicioID = ee.EjercicioID

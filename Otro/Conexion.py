@@ -76,20 +76,16 @@ def consultar_estadisticas(conexion, usuarioID):
     except Exception as e:
         print("❌ Error al consultar estadísticas:", e)
         return []
-
-def aumentar_repeticiones(conexion, usuarioID, incremento, ErroresPostura, PuntajeTecnica):
+    
+def actualizar_estadisticas(conexion, usuarioID, nombreEjericcio, repeticiones, erroresPostura, puntajeTecnica):
     try:
         cursor = conexion.cursor()
         cursor.execute("""
-            UPDATE EstadisticasEjercicio
-            SET Repeticiones = Repeticiones + ?,
-                ErroresPostura = ?,
-                PuntajeTecnica = ?
-            WHERE UsuarioID = ?
-        """, (incremento, ErroresPostura, PuntajeTecnica, usuarioID))
+            exec sp_actualizar_estadisticas_ejercicio @UsuarioID = ?,@nombre = ?, @repeticiones = ?, @ErroresPostura = ?, @PuntajeTecnica = ?
+        """, (usuarioID, nombreEjericcio, repeticiones, erroresPostura, puntajeTecnica))
         conexion.commit()
-        print("✅ Repeticiones actualizadas correctamente")
+        print("✅ Estadísticas actualizadas correctamente")
         return True
     except Exception as e:
-        print("❌ Error al actualizar repeticiones:", e)
+        print("❌ Error al actualizar estadísticas:", e)
         return False
