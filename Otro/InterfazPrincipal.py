@@ -69,7 +69,7 @@ def detectar_camaras():
     return camaras_disponibles
 
 def mostrar_camara():
-    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo
+    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo,estadisticas
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
@@ -727,7 +727,6 @@ def mostrar_notificaciones():
     ventana_popup.configure(fg_color="#e6eaf8")
     ventana_popup.overrideredirect(True)  # Elimina la barra de título
     centrar_ventana(ventana_popup, 400, 300)
-
 
     lbl_titulo = ctk.CTkLabel(ventana_popup, text="Noticias y Notificaciones", font=("Arial", 16, "bold"), fg_color="#e6eaf8", text_color="#393E46")
     lbl_titulo.pack(pady=(20, 10))
