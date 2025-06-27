@@ -163,6 +163,80 @@ def evaluar_sentadilla(keypoints_cuerpo):
         print("Errores encontrados:", errores)
 
         return zonaErorr, repeticiones
+    
+def veredicto_pushup(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
+    marcas_error_global = []
+    if len(keypoints_cuerpo) == 0:
+        print("No se detectaron poses.")
+        return "Desconocido"
+    
+    if "left_wrist" in zonaError:
+        muñeca_dx = int(landmarks[15].x * ancho)
+        muñeca_dy = int(landmarks[15].y * altura)
+        marcas_error_global.append(("punto", muñeca_dx, muñeca_dy))
+    if "right_wrist" in zonaError:
+        muñeca_dx = int(landmarks[16].x * ancho)
+        muñeca_dy = int(landmarks[16].y * altura)
+        marcas_error_global.append(("punto", muñeca_dx, muñeca_dy))
+    if "left_elbow" in zonaError:
+        codo_dx = int(landmarks[13].x * ancho)
+        codo_dy = int(landmarks[13].y * altura)
+        marcas_error_global.append(("punto", codo_dx, codo_dy))
+    if "right_elbow" in zonaError:
+        codo_dx = int(landmarks[14].x * ancho)
+        codo_dy = int(landmarks[14].y * altura)
+        marcas_error_global.append(("punto", codo_dx, codo_dy))
+    
+    return marcas_error_global
+
+def evaluar_pullup(keypoints_cuerpo):
+    """
+    Evalúa si una dominada (pull-up) está bien hecha.
+    Retorna zonaError (lista de zonas con error) y repeticiones (int).
+    """
+    zonaError = []
+    repeticiones = 0
+    estado = "abajo"  # Estado inicial: colgado
+    veredicto = ""
+    for i, frame_kp in enumerate(keypoints_cuerpo):
+        # Ángulo del codo derecho e izquierdo
+        angulo_codo_derecho = calcular_angulo(
+            frame_kp["right_shoulder"],
+            frame_kp["right_elbow"],
+            frame_kp["right_wrist"]
+        )
+        angulo_codo_izquierdo = calcular_angulo(
+            frame_kp["left_shoulder"],
+            frame_kp["left_elbow"],
+            frame_kp["left_wrist"]
+        )
+        # Altura de la barbilla respecto a los hombros
+        barbilla_y = frame_kp.get("nose", (0, 0))[1]
+        hombro_izq_y = frame_kp["left_shoulder"][1]
+        hombro_der_y = frame_kp["right_shoulder"][1]
+        hombros_y = (hombro_izq_y + hombro_der_y) / 2
+
+        # Detectar subida (barbilla arriba de los hombros)
+        if estado == "abajo" and barbilla_y < hombros_y:
+            estado = "arriba"
+        # Detectar bajada (barbilla baja de los hombros y codos extendidos)
+        elif estado == "arriba" and barbilla_y > hombros_y and angulo_codo_derecho > 150 and angulo_codo_izquierdo > 150:
+            estado = "abajo"
+            repeticiones += 1
+
+        # Evaluación básica de errores
+        if angulo_codo_derecho < 30 or angulo_codo_izquierdo < 30:
+            veredicto = f"Frame {i}: ⚠️ Codos demasiado flexionados, posible impulso."
+            zonaError.append("right_elbow")
+            zonaError.append("left_elbow")
+        elif angulo_codo_derecho > 170 or angulo_codo_izquierdo > 170:
+            veredicto = f"Frame {i}: ⚠️ Hiperextensión de codo."
+            zonaError.append("right_elbow")
+            zonaError.append("left_elbow")
+        else:
+            veredicto = f"Frame {i}: ✅ Movimiento correcto."
+    print(veredicto)
+    return zonaError, repeticiones
 
 def calcular_angulo(a, b, c):
     """Calcula el ángulo en el punto b entre a y c"""

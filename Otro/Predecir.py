@@ -107,6 +107,8 @@ def main( model, le):
         print("Ejercicio no soportado para evaluación automática.")
     
     print(f"Ejercicio detectado en el video: {ejercicio}")
+    return False
+
 import numpy as np
 
 def calcular_angulo(a, b, c):

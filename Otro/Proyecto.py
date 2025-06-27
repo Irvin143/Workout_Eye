@@ -6,6 +6,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog  
 from collections import defaultdict
+from EntrenarModelo import main as entrenar_modelo
 
 mp_pose = mp.solutions.pose
 
@@ -152,6 +153,7 @@ def subir_video():
 
         print(f"Valores extraídos: {X.shape}, {y.shape}")
         print(f"Datos guardados en la carpeta 'datos'. Tamaño X: {X.shape}, y: {y.shape}")
+        entrenar_modelo()
 
 def iniciar_busqueda_en_hilo(): 
     hilo = threading.Thread(target=subir_video)

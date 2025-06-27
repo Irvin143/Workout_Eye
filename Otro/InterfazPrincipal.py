@@ -15,6 +15,7 @@ from keras.models import load_model
 import pickle
 from Predecir import convertir_landmarks_a_diccionario
 from Predecir import main as predecirMain
+from Proyecto import main as entrenarIA
 from EvaluarEjericios import *
 from Conexion import *
 from pygrabber.dshow_graph import FilterGraph
@@ -81,7 +82,7 @@ def mostrar_camara():
     cap = cv2.VideoCapture(cam_index)
     pose = mp.solutions.pose.Pose(static_image_mode=False)
 
-    animar = False
+    #animar = False
     ventana_camara = tk.Toplevel()
     ventana_camara.title("Procesando cámara")
     ventana_camara.geometry("800x600")
@@ -219,25 +220,30 @@ def cargarInterfazCamaras(btn):
                                         text_color="#393E46",
                                         border_color="#FFFFFF")
             radio.grid(row=i + 2, column=0, padx=10, pady=10, sticky="w")
-        animar = False
+        btn.animar = False
 
     animar_texto(btn)
     threading.Thread(target=cargar_camaras).start()
 
+
+
 def animar_texto(btn):
-    global animar 
-    animar = True
+    # Usa un atributo en el botón para controlar la animación individual
+    btn.animar = True
     textoAnterior = btn.cget("text")
     def ciclo(i=0):
-        if animar:
+        if getattr(btn, "animar", False):
             btn.configure(state="disabled")
             puntos = "." * (i % 4)
             btn.configure(text=f"Cargando{puntos}")
-            ventanaInicial.after(300, ciclo, i + 1)
+            ventanaInicial.after(300, ciclo, i + 1)    
         else:
             btn.configure(text=textoAnterior)
             btn.configure(state="normal")
     ciclo()
+
+def detener_animacion(btn):
+    btn.animar = False
 
 def cargarCamara(btn):
     global lbl_txtSeleccion
@@ -413,23 +419,33 @@ def interfazInicial():
     fg_color="#00ADB5",
     text_color="white",
     width=250,
-    height=75
+    height=75,
+    command=lambda: entrenarIA()  # Llama a la función entrenarIA al hacer clic
     )   
     btn_entrenar.grid(row=2, column=0, pady=10)
+    def predecirVideo():
+        global model, le, modelo_listo, animar
+        animar_texto(btn_predecir_video)
+        if not modelo_listo:
+            cargar_modelo_y_labels()
+        predecirMain(model, le)
+        btn_predecir_video.animar = False
 
-    # Botón Video Grabado (centro)
-    btn_videoGuardado = ctk.CTkButton(
-    ventanaInicial,
-    text="Ingresar video grabado",
-    font=("Arial", 18, "bold"),
-    corner_radius=20,  # ¡Esto sí redondea!
-    fg_color="#00ADB5",
-    text_color="white",
-    width=250,
-    height=75,
-    command=lambda: predecirMain(model, le)  # Llama a la función predecirMain al hacer clic
-    )   
-    btn_videoGuardado.grid(row=2, column=1, pady=10)
+
+    # Botón para predecir video en un hilo
+    btn_predecir_video = ctk.CTkButton(
+        ventanaInicial,
+        text="Predecir video",
+        font=("Arial", 18, "bold"),
+        corner_radius=20,
+        fg_color="#00ADB5",
+        text_color="white",
+        width=250,
+        height=75,
+        command=lambda: threading.Thread(target=predecirVideo).start()
+    )
+    btn_predecir_video.grid(row=2, column=1, pady=10)
+
 
     # Botón Cerrar (abajo izquierda)
     btn_cerrar = ctk.CTkButton(
