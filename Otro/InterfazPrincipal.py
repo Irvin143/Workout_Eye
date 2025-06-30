@@ -70,7 +70,7 @@ def detectar_camaras():
     return camaras_disponibles
 
 def mostrar_camara():
-    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo,estadisticas
+    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo,estadisticas, btn_camara
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
@@ -99,6 +99,8 @@ def mostrar_camara():
     btn_cerrar = tk.Button(ventana_camara, text="Cerrar cámara", command=cerrar_camara, bg="#00ADB5", fg="white", font=("Arial", 12, "bold"))
     btn_cerrar.pack(pady=10)
 
+    detener_animacion(btn_camara)
+
     def actualizar_frame():
         global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
         ventana_tamaño = 100  # Tamaño de la ventana de frames
@@ -122,6 +124,7 @@ def mostrar_camara():
             keypoints.append(puntos)
 
             evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError)
+
             if len(keypoints) == ventana_tamaño:
                 zonaError = []
                 repeticionesAux = 0
@@ -131,6 +134,8 @@ def mostrar_camara():
                         zonaError, repeticionesAux = evaluar_sentadilla(keypoints_cuerpo)
                     case "barbell biceps curl":
                         zonaError, repeticionesAux = evaluar_curl_biceps(keypoints_cuerpo)
+                    case "pull up":
+                        zonaError, repeticionesAux = evaluar_pullup(keypoints_cuerpo)
                     case _:
                         zonaError = []
                 repeticiones += repeticionesAux
@@ -176,6 +181,9 @@ def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura
             marcar_error(marcas_error_global)
         case "barbell biceps curl":
             marcas_error_global = veredictoCurl_biceps(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
+            marcar_error(marcas_error_global)
+        case "pull up":
+            marcas_error_global = veredicto_pullup(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
             marcar_error(marcas_error_global)
 
 def predecir_ejercicio(keypoints):
@@ -394,7 +402,7 @@ def interfazInicial():
     lbl_txtSeleccion.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="w")
 
     opcion = ctk.StringVar(value="")  
-
+    global btn_camara
     # Botón Iniciar Cámara (centro)
     btn_camara =ctk.CTkButton(
     ventanaInicial,

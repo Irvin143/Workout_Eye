@@ -164,7 +164,7 @@ def evaluar_sentadilla(keypoints_cuerpo):
 
         return zonaErorr, repeticiones
     
-def veredicto_pushup(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
+def veredicto_pullup(keypoints_cuerpo, landmarks, ancho, altura,zonaError):
     marcas_error_global = []
     if len(keypoints_cuerpo) == 0:
         print("No se detectaron poses.")
