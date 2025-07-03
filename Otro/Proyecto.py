@@ -106,32 +106,22 @@ def subir_video():
             clave = os.path.splitext(os.path.basename(ruta))[0].split('_')[0]
             videos_dict[clave].append(ruta)
         print("Videos encontrados:", videos_dict)
+
         if not videos_dict:
             print("No se encontraron videos en la carpeta seleccionada.")
             return
+        
         print("Procesando videos...")
+
         for etiqueta, rutas_videos in videos_dict.items():
             for ruta_video in rutas_videos:
                 print(f"Procesando video: {ruta_video}")
                 kp, angulos, desiciones = extraer_keypoints(ruta_video)
 
-                Angulos_rodilla.extend(angulos)
-                Angulos_desicion.extend(desiciones) 
-                print(etiqueta)
                 X.extend(kp)
                 y.extend([etiqueta] * len(kp))
 
-        '''for etiqueta,video in videos_dict.items():
-            #x tiene que ser una lista de listas, tiene listas de keypoints cada frame es una lista, entonces cada frame es una lista de keypoints
-            #y tiene que ser una lista de etiquetas
-            kp,angulos,desiciones = extraer_keypoints(video)
 
-            Angulos_rodilla.extend(angulos)
-            Angulos_desicion.extend(desiciones) 
-
-            X.extend(kp)
-            y.extend([etiqueta] * len(kp))  # Cambia "etiqueta" por la etiqueta correspondiente al video
-'''
         datos_dir = "datos"
         os.makedirs(datos_dir, exist_ok=True)
         x_path = os.path.join(datos_dir, "X.npy")

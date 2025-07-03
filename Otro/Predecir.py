@@ -76,8 +76,7 @@ def convertir_landmarks_a_diccionario(results):
             puntos_xy[nombre] = [landmark.x, landmark.y]
     return puntos_xy
 
-def main( model, le):
-    video_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi")])
+def main( model, le,video_path=None):
 
     print("Extrayendo keypoints...")
     X,keypoints_cuerpo = extraer_keypoints(video_path)
@@ -107,7 +106,7 @@ def main( model, le):
         print("Ejercicio no soportado para evaluación automática.")
     
     print(f"Ejercicio detectado en el video: {ejercicio}")
-    return False
+    return ejercicio
 
 import numpy as np
 

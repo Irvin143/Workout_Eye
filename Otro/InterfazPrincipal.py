@@ -1,6 +1,8 @@
 import threading
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
+from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import os
@@ -426,7 +428,7 @@ def interfazInicial():
     text_color="white",
     width=250,
     height=75,
-    command=lambda: entrenarIA()  # Llama a la función entrenarIA al hacer clic
+    command=lambda: entrenarIA()# Llama a la función entrenarIA al hacer clic
     )   
     btn_entrenar.grid(row=2, column=0, pady=10)
     def predecirVideo():
@@ -448,7 +450,7 @@ def interfazInicial():
         text_color="white",
         width=250,
         height=75,
-        command=lambda: threading.Thread(target=predecirVideo).start()
+        command=lambda: threading.Thread(target=interfaz_subir_video).start()
     )
     btn_predecir_video.grid(row=2, column=1, pady=10)
 
@@ -563,6 +565,7 @@ def mostrar_estadisticas():
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     import random
     from datetime import datetime, timedelta
+    from tkinter import filedialog, messagebox
 
     # Ventana de estadísticas a pantalla completa
     global conexion, usuarioID
@@ -766,6 +769,60 @@ def mostrar_notificaciones():
 
     btn_cerrar_popup = ctk.CTkButton(ventana_popup, text="Cerrar", fg_color="#00ADB5", text_color="white", command=ventana_popup.destroy)
     btn_cerrar_popup.pack(pady=20)
+
+# Interfaz para subir video y detectar ejercicio
+def interfaz_subir_video():
+
+    def procesar_video(ruta_video):
+        global model, le, modelo_listo
+        ejercicio = "Desconocido"
+        if not modelo_listo:
+            cargar_modelo_y_labels()
+        try:
+            ejercicio = predecirMain(model, le, ruta_video)
+            lbl_resultado.configure(text=f"Ejercicio detectado: {ejercicio}", text_color="#00ADB5")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error al procesar el video:\n{e}")
+
+    ventana_subir = ctk.CTkToplevel()
+    ventana_subir.title("Subir Video para Detección")
+    ventana_subir.geometry("400x250")
+    ventana_subir.grab_set()
+    ventana_subir.focus_force()
+    ventana_subir.configure(fg_color="#e6eaf8")
+
+    lbl_titulo = ctk.CTkLabel(ventana_subir, text="Subir un video para detectar ejercicio", font=("Arial", 16, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_titulo.pack(pady=(20, 10))
+
+    ruta_video = ctk.StringVar()
+
+    entry_ruta = ctk.CTkEntry(ventana_subir, textvariable=ruta_video, placeholder_text="Ruta del video...", width=250)
+    entry_ruta.pack(pady=10, padx=20)
+
+    def seleccionar_video():
+        archivo = filedialog.askopenfilename(
+            filetypes=[("Archivos de video", "*.mp4 *.avi *.mov *.mkv"), ("Todos los archivos", "*.*")]
+        )
+        if archivo:
+            ruta_video.set(archivo)
+
+    btn_explorar = ctk.CTkButton(ventana_subir, text="Seleccionar video", fg_color="#00ADB5", text_color="white", command=seleccionar_video)
+    btn_explorar.pack(pady=5)
+
+    btn_procesar = ctk.CTkButton(
+        ventana_subir,
+        text="Procesar video",
+        fg_color="#00ADB5",
+        text_color="white",
+        command=lambda: threading.Thread(target=lambda: procesar_video(ruta_video.get()) if ruta_video.get() else messagebox.showwarning("Advertencia", "Selecciona un video primero.")).start()
+    )
+    btn_procesar.pack(pady=10)
+
+    lbl_resultado = ctk.CTkLabel(ventana_subir, text="", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")
+    lbl_resultado.pack(pady=10)
+
+    btn_cerrar = ctk.CTkButton(ventana_subir, text="Cerrar", fg_color="#393E46", text_color="white", command=ventana_subir.destroy)
+    btn_cerrar.pack(pady=10)
 
 
 def main():
