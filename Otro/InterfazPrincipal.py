@@ -31,8 +31,6 @@ conexion = conectar_bd()
 nombreUsuario = "Usuario Desconocido"
 password = ""
 usuarioID = None
-# filepath: c:\VisualStudio\Python\WorkoutEye\Otro\InterfazPrincipal.py
-# ...existing code...
 
 CONFIG_FILE = "inicioSesion.json"
 def guardar_credenciales(usuario, contra, usuarioid):

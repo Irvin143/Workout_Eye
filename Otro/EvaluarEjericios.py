@@ -238,6 +238,70 @@ def evaluar_pullup(keypoints_cuerpo):
     print(veredicto)
     return zonaError, repeticiones
 
+def veredicto_extension_triceps(keypoints_cuerpo, landmarks, ancho, altura, zonaError):
+    marcas_error_global = []
+    if len(keypoints_cuerpo) == 0:
+        print("No se detectaron poses.")
+        return "Desconocido"
+
+    if "left_elbow" in zonaError:
+        codo_dx = int(landmarks[13].x * ancho)
+        codo_dy = int(landmarks[13].y * altura)
+        marcas_error_global.append(("punto", codo_dx, codo_dy))
+    if "right_elbow" in zonaError:
+        codo_dx = int(landmarks[14].x * ancho)
+        codo_dy = int(landmarks[14].y * altura)
+        marcas_error_global.append(("punto", codo_dx, codo_dy))
+    if "left_wrist" in zonaError:
+        muñeca_dx = int(landmarks[15].x * ancho)
+        muñeca_dy = int(landmarks[15].y * altura)
+        marcas_error_global.append(("punto", muñeca_dx, muñeca_dy))
+    if "right_wrist" in zonaError:
+        muñeca_dx = int(landmarks[16].x * ancho)
+        muñeca_dy = int(landmarks[16].y * altura)
+        marcas_error_global.append(("punto", muñeca_dx, muñeca_dy))
+
+    return marcas_error_global
+
+def evaluar_extension_triceps(keypoints_cuerpo):
+    zonaError = []
+    repeticiones = 0
+    estado = ""
+    veredicto = ""
+    for i, frame_kp in enumerate(keypoints_cuerpo):
+        angulo_codo_derecho = calcular_angulo(
+            frame_kp["right_shoulder"],
+            frame_kp["right_elbow"],
+            frame_kp["right_wrist"]
+        )
+        angulo_codo_izquierdo = calcular_angulo(
+            frame_kp["left_shoulder"],
+            frame_kp["left_elbow"],
+            frame_kp["left_wrist"]
+        )
+        # Detectar extensión (bajar) y flexión (subir)
+        if angulo_codo_derecho > 150 or angulo_codo_izquierdo > 150:
+            if estado != "abajo":
+                estado = "abajo"
+        elif (60 < angulo_codo_derecho < 120) or (60 < angulo_codo_izquierdo < 120):
+            if estado == "abajo":
+                estado = "arriba"
+                repeticiones += 1
+
+        # Evaluación de errores
+        if angulo_codo_derecho < 50 or angulo_codo_izquierdo < 50:
+            veredicto = f"Frame {i}: ⚠️ Codo demasiado flexionado ({int(angulo_codo_derecho)}°)."
+            zonaError.append("right_elbow")
+            zonaError.append("left_elbow")
+        elif angulo_codo_derecho > 170 or angulo_codo_izquierdo > 170:
+            veredicto = f"Frame {i}: ⚠️ Hiperextensión del codo ({int(angulo_codo_derecho)}°)."
+            zonaError.append("right_elbow")
+            zonaError.append("left_elbow")
+        else:
+            veredicto = f"Frame {i}: ✅ Movimiento correcto ({int(angulo_codo_derecho)}°)."
+    print(veredicto)
+    return zonaError, repeticiones
+
 def calcular_angulo(a, b, c):
     """Calcula el ángulo en el punto b entre a y c"""
     a, b, c = np.array(a), np.array(b), np.array(c)
