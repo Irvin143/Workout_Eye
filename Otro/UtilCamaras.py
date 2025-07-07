@@ -1,8 +1,14 @@
+import threading
 from pygrabber.dshow_graph import FilterGraph
 import cv2
 import mediapipe as mp
 import tkinter as tk
 from PIL import Image, ImageTk
+from UtilEjercicio import evaluarEjercicio,predecir_ejercicio
+from EvaluarEjericios import evaluar_sentadilla, evaluar_curl_biceps, evaluar_pullup
+from Utilidades import convertir_landmarks_a_diccionario, detener_animacion, animar_texto
+from Conexion import actualizar_estadisticas
+import customtkinter as ctk
 
 def detectar_camaras():
     camaras_disponibles = []
@@ -17,8 +23,8 @@ def detectar_camaras():
 
     return camaras_disponibles
 
-def mostrar_camara():
-    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo,estadisticas, btn_camara
+def mostrar_camara( btn_camara,conexion, usuarioID,opcion):
+    global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo,estadisticas
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
@@ -50,7 +56,7 @@ def mostrar_camara():
     detener_animacion(btn_camara)
 
     def actualizar_frame():
-        global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
+        global nombre_ejercicio, zonaError, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
         if not ret:
@@ -71,7 +77,7 @@ def mostrar_camara():
             keypoints_cuerpo.append(keyCuerpo)
             keypoints.append(puntos)
 
-            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError)
+            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError,frame_rgb)
 
             if len(keypoints) == ventana_tamaño:
                 zonaError = []
@@ -112,12 +118,12 @@ def mostrar_camara():
     actualizar_frame()
 
 
-def cargarInterfazCamaras(btn):
-    global camaras_disponibles,ventanaInicial
+def cargarInterfazCamaras(btn,ventanaInicial,frameCamaras, opcion):
+    global camaras_disponibles
     camaras_disponibles = []
 
     def cargar_camaras():
-        global camaras_disponibles,frameCamaras,opcion,animar
+        global camaras_disponibles,animar
         camaras_disponibles = detectar_camaras()
         for i, (indice, nombre) in enumerate(camaras_disponibles):
             camaras_disponibles[i] = f"{indice} - {nombre}"
@@ -131,15 +137,14 @@ def cargarInterfazCamaras(btn):
             radio.grid(row=i + 2, column=0, padx=10, pady=10, sticky="w")
         btn.animar = False
 
-    animar_texto(btn)
+    animar_texto(btn,ventanaInicial)
     threading.Thread(target=cargar_camaras).start()
 
 
-def cargarCamara(btn):
-    global lbl_txtSeleccion
+def cargarCamara(btn,ventanaInicial,btn_camara,conexion, usuarioID,opcion,lbl_txtSeleccion):
     if opcion.get() == "":
         lbl_txtSeleccion.configure(text_color = "#ff0000")
     else:
         lbl_txtSeleccion.configure(text_color = "#393E46")
-        animar_texto(btn)
-        threading.Thread(target = mostrar_camara).start()
+        animar_texto(btn,ventanaInicial)
+        threading.Thread(target=mostrar_camara, args=(btn_camara, conexion, usuarioID, opcion)).start()
