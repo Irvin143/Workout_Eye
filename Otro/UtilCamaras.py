@@ -1,0 +1,145 @@
+from pygrabber.dshow_graph import FilterGraph
+import cv2
+import mediapipe as mp
+import tkinter as tk
+from PIL import Image, ImageTk
+
+def detectar_camaras():
+    camaras_disponibles = []
+    graph = FilterGraph()
+    dispositivos = graph.get_input_devices()
+
+    for i, nombre in enumerate(dispositivos):
+        cap = cv2.VideoCapture(i)
+        if cap.read()[0]:
+            camaras_disponibles.append((str(i), nombre))
+        cap.release()
+
+    return camaras_disponibles
+
+def mostrar_camara():
+    global nombre_ejercicio, zonaError, animar, repeticiones, keypoints_cuerpo,estadisticas, btn_camara
+    keypoints_cuerpo = []
+    repeticiones = 0
+    zonaError = []  # Lista para almacenar las zonas de error
+    estadisticas = []  # Lista para almacenar las estadísticas
+    nombre_ejercicio = "Desconocido"
+    keypoints = []  # Lista para almacenar los keypoints
+
+    cam_index = int(opcion.get())  # Obtener el índice de la cámara seleccionada
+    cap = cv2.VideoCapture(cam_index)
+    pose = mp.solutions.pose.Pose(static_image_mode=False)
+
+    #animar = False
+    ventana_camara = tk.Toplevel()
+    ventana_camara.title("Procesando cámara")
+    ventana_camara.geometry("800x600")
+
+    lbl_video = tk.Label(ventana_camara)
+    lbl_video.pack()
+    def cerrar_camara():
+        # Actualiza las estadísticas de todos los ejercicios realizados en la sesión
+        for est in estadisticas:
+            actualizar_estadisticas(conexion, usuarioID, est["nombre"], est["repeticiones"], len(zonaError), 10)
+        cap.release()
+        ventana_camara.destroy()
+
+    btn_cerrar = tk.Button(ventana_camara, text="Cerrar cámara", command=cerrar_camara, bg="#00ADB5", fg="white", font=("Arial", 12, "bold"))
+    btn_cerrar.pack(pady=10)
+
+    detener_animacion(btn_camara)
+
+    def actualizar_frame():
+        global nombre_ejercicio, zonaError, frame_rgb, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
+        ventana_tamaño = 100  # Tamaño de la ventana de frames
+        ret, frame = cap.read()
+        if not ret:
+            ventana_camara.after(10, actualizar_frame)
+            return
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(frame_rgb)
+
+        if results.pose_landmarks:
+            altura, ancho, _ = frame.shape
+            landmarks = results.pose_landmarks.landmark
+            puntos = []
+            for lm in results.pose_landmarks.landmark:
+                puntos.extend([lm.x, lm.y, lm.z])
+
+            keyCuerpo = convertir_landmarks_a_diccionario(results)
+            keypoints_cuerpo.append(keyCuerpo)
+            keypoints.append(puntos)
+
+            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError)
+
+            if len(keypoints) == ventana_tamaño:
+                zonaError = []
+                repeticionesAux = 0
+                nombre_ejercicio = predecir_ejercicio(keypoints)
+                match nombre_ejercicio:
+                    case "squat":
+                        zonaError, repeticionesAux = evaluar_sentadilla(keypoints_cuerpo)
+                    case "barbell biceps curl":
+                        zonaError, repeticionesAux = evaluar_curl_biceps(keypoints_cuerpo)
+                    case "pull up":
+                        zonaError, repeticionesAux = evaluar_pullup(keypoints_cuerpo)
+                    case _:
+                        zonaError = []
+                repeticiones += repeticionesAux
+                lbl_repeticiones.configure(text=f"Repeticiones: {repeticiones}")
+                print(f"Ejercicio detectado: {nombre_ejercicio}")
+                # Actualizar la lista de estadísticas
+                # Buscar si ya existe el ejercicio en la lista
+                encontrado = False
+                for est in estadisticas:
+                    if est["nombre"] == nombre_ejercicio:
+                        est["repeticiones"] += repeticionesAux
+                        encontrado = True
+                        break
+                if not encontrado and nombre_ejercicio != "Desconocido":
+                    estadisticas.append({"nombre": nombre_ejercicio, "repeticiones": repeticionesAux})
+
+                keypoints.clear()
+                keypoints_cuerpo.clear()
+
+        img = Image.fromarray(frame_rgb)
+        imgtk = ImageTk.PhotoImage(image=img)
+        lbl_video.imgtk = imgtk
+        lbl_video.configure(image=imgtk)
+        ventana_camara.after(10, actualizar_frame)
+
+    actualizar_frame()
+
+
+def cargarInterfazCamaras(btn):
+    global camaras_disponibles,ventanaInicial
+    camaras_disponibles = []
+
+    def cargar_camaras():
+        global camaras_disponibles,frameCamaras,opcion,animar
+        camaras_disponibles = detectar_camaras()
+        for i, (indice, nombre) in enumerate(camaras_disponibles):
+            camaras_disponibles[i] = f"{indice} - {nombre}"
+            # Crear los radio buttons
+            radio = ctk.CTkRadioButton(frameCamaras, text=f"{nombre}",
+                                        variable=opcion, 
+                                        value=f"{i}",
+                                        fg_color="#1F3E3E", 
+                                        text_color="#393E46",
+                                        border_color="#FFFFFF")
+            radio.grid(row=i + 2, column=0, padx=10, pady=10, sticky="w")
+        btn.animar = False
+
+    animar_texto(btn)
+    threading.Thread(target=cargar_camaras).start()
+
+
+def cargarCamara(btn):
+    global lbl_txtSeleccion
+    if opcion.get() == "":
+        lbl_txtSeleccion.configure(text_color = "#ff0000")
+    else:
+        lbl_txtSeleccion.configure(text_color = "#393E46")
+        animar_texto(btn)
+        threading.Thread(target = mostrar_camara).start()

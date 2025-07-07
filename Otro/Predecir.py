@@ -1,12 +1,10 @@
-from tkinter import filedialog
 import cv2
 import mediapipe as mp
 import numpy as np
-import pickle
-from tensorflow.keras.models import load_model
 from collections import Counter
-from EvaluarEjericios import evaluar_sentadilla
+
 mp_pose = mp.solutions.pose
+
 mediapipe_keypoints = {
     0: "nose",
     1: "left_eye_inner",
@@ -38,9 +36,7 @@ mediapipe_keypoints = {
     27: "left_ankle",
     28: "right_ankle"
 }
-
 def extraer_keypoints(video_path):
-    
     cap = cv2.VideoCapture(video_path)
     pose = mp_pose.Pose(static_image_mode=False)
     keypoints = []
@@ -57,7 +53,7 @@ def extraer_keypoints(video_path):
             puntos = []
             for lm in results.pose_landmarks.landmark:
                 puntos.extend([lm.x, lm.y, lm.z])
-        
+
             keyCuerpo = convertir_landmarks_a_diccionario(results)
             keypoints_cuerpo.append(keyCuerpo)
 
@@ -65,8 +61,6 @@ def extraer_keypoints(video_path):
     cap.release()
     pose.close()
     return keypoints, keypoints_cuerpo
-
-
 
 def convertir_landmarks_a_diccionario(results):
     puntos_xy = {}
@@ -76,7 +70,7 @@ def convertir_landmarks_a_diccionario(results):
             puntos_xy[nombre] = [landmark.x, landmark.y]
     return puntos_xy
 
-def main( model, le,video_path=None):
+def predecirVideo( model, le,video_path=None):
 
     print("Extrayendo keypoints...")
     X,keypoints_cuerpo = extraer_keypoints(video_path)
@@ -94,30 +88,9 @@ def main( model, le,video_path=None):
 
     # Obtener la etiqueta original con el label encoder
     ejercicio = le.inverse_transform([clase_mayoritaria])[0]
-    
-    if ejercicio == "squat":
-        resultado = evaluar_sentadilla(keypoints_cuerpo)
-        print("Resultado de la evaluación de la sentadilla:", resultado)
-    elif ejercicio == "curl_biceps":
-        from EvaluarEjericios import evaluar_curl_biceps
-        resultado = evaluar_curl_biceps(keypoints_cuerpo)
-        print("Resultado de la evaluación del curl de bíceps:", resultado)
-    else:
-        print("Ejercicio no soportado para evaluación automática.")
-    
+
     print(f"Ejercicio detectado en el video: {ejercicio}")
     return ejercicio
 
 import numpy as np
 
-def calcular_angulo(a, b, c):
-    """Calcula el ángulo en el punto b entre a y c"""
-    a, b, c = np.array(a), np.array(b), np.array(c)
-    ba = a - b
-    bc = c - b
-    cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-    angle = np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
-    return angle
-
-if __name__ == "__main__":
-    main()
