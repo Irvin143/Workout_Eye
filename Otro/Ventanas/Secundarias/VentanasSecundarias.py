@@ -6,8 +6,8 @@ import tkinter as tk
 import customtkinter as ctk
 import os
 from PIL import Image, ImageTk
-from Otro.Utilidades.Utilidades import guardar_credenciales, centrar_ventana
-from Otro.Conexion.Conexion import consultar_estadisticas, grabarUsuario, consultarUsuario
+from Otro.Utilidades.Utilidades import guardar_credenciales, centrar_ventana, animar_texto, detener_animacion
+from Otro.Conexion.Conexion import consultar_estadisticas, grabarUsuario
 from Otro.Utilidades.Ejercicios.Predecir import predecirVideo
 from Otro.Conexion.Conexion import conectar_bd
 
@@ -301,16 +301,18 @@ def interfaz_mostrar_notificaciones():
 
 # Interfaz para subir video y detectar ejercicio
 def interfaz_subir_video(model,le,modelo_listo):
-
-    def procesar_video(ruta_video):
+    def procesar_video(ruta_video,btn,ventana):
         ejercicio = "Desconocido"
         if not modelo_listo:
             messagebox.showwarning("Advertencia", "El modelo no está listo. Por favor, espera a que se cargue el modelo.")
             return
         try:
+            animar_texto(btn,ventana)
             ejercicio = predecirVideo(model, le, ruta_video)
             lbl_resultado.configure(text=f"Ejercicio detectado: {ejercicio}", text_color="#00ADB5")
+            detener_animacion(btn)
         except Exception as e:
+            detener_animacion(btn)
             messagebox.showerror("Error", f"Ocurrió un error al procesar el video:\n{e}")
 
     ventana_subir = ctk.CTkToplevel()
@@ -318,6 +320,7 @@ def interfaz_subir_video(model,le,modelo_listo):
     ventana_subir.geometry("400x250")
     ventana_subir.grab_set()
     ventana_subir.focus_force()
+    centrar_ventana(ventana_subir, 400, 250)
     ventana_subir.configure(fg_color="#e6eaf8")
 
     lbl_titulo = ctk.CTkLabel(ventana_subir, text="Subir un video para detectar ejercicio", font=("Arial", 16, "bold"), fg_color="#e6eaf8", text_color="#393E46")
@@ -343,8 +346,16 @@ def interfaz_subir_video(model,le,modelo_listo):
         text="Procesar video",
         fg_color="#00ADB5",
         text_color="white",
-        command=lambda: threading.Thread(target=lambda: procesar_video(ruta_video.get()) if ruta_video.get() else messagebox.showwarning("Advertencia", "Selecciona un video primero.")).start()
     )
+
+    def procesar_video_command(btn,ventana):
+        if ruta_video.get():
+            threading.Thread(target=lambda: procesar_video(ruta_video.get(),btn,ventana)).start()
+        else:
+            messagebox.showwarning("Advertencia", "Selecciona un video primero.")
+    
+    btn_procesar.configure(command=lambda: procesar_video_command(btn_procesar, ventana_subir))
+
     btn_procesar.pack(pady=10)
 
     lbl_resultado = ctk.CTkLabel(ventana_subir, text="", font=("Arial", 14, "bold"), fg_color="#e6eaf8", text_color="#393E46")

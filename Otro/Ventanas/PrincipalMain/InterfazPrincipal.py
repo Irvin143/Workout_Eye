@@ -27,8 +27,8 @@ usuarioID = None
 def cargar_modelo_y_labels():
     global model, le, modelo_listo
     print("Cargando modelo y etiquetas...")
-    model = load_model("modelo_ejercicios.h5")
-    with open("labels.pkl", "rb") as f:
+    model = load_model("datos/modelo_ejercicios.h5")
+    with open("datos/labels.pkl", "rb") as f:
         le = pickle.load(f)
     modelo_listo = True
     print("Modelo y etiquetas cargados.")
@@ -242,6 +242,7 @@ def mostrar_hora():
 
 def main():
     global nombreUsuario, password, usuarioID
+    
     threading.Thread(target=cargar_modelo_y_labels).start()
 
     nombreUsuario, password, usuarioID = cargar_credenciales()

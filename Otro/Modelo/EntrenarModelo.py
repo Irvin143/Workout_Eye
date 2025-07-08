@@ -32,11 +32,11 @@ def main():
     model.fit(X_train, y_train, epochs=30, batch_size=32, validation_data=(X_test, y_test))
 
     # Guardar modelo y codificador
-    model.save("modelo_ejercicios.h5")
+    model.save("datos/modelo_ejercicios.h5")
 
     # Guardar etiquetas para decodificar en predicción
     import pickle
-    with open("labels.pkl", "wb") as f:
+    with open("datos/labels.pkl", "wb") as f:
         pickle.dump(le, f)
 
     print("Modelo entrenado y guardado como modelo_ejercicios.h5")

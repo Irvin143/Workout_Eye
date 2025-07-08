@@ -1,7 +1,7 @@
 import json
 import os
 
-CONFIG_FILE = "inicioSesion.json"
+CONFIG_FILE = "datos/inicioSesion.json"
 def guardar_credenciales(usuario, contra, usuarioid):
     with open(CONFIG_FILE, "w") as f:
         json.dump({"usuario": usuario, "contra": contra, "usuarioID": usuarioid}, f)
