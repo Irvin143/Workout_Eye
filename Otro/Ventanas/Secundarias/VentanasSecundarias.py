@@ -6,10 +6,10 @@ import tkinter as tk
 import customtkinter as ctk
 import os
 from PIL import Image, ImageTk
-from Utilidades import guardar_credenciales, centrar_ventana
-from Conexion import consultar_estadisticas, grabarUsuario, consultarUsuario
-from Predecir import predecirVideo
-from Conexion import conectar_bd
+from Otro.Utilidades.Utilidades import guardar_credenciales, centrar_ventana
+from Otro.Conexion.Conexion import consultar_estadisticas, grabarUsuario, consultarUsuario
+from Otro.Utilidades.Ejercicios.Predecir import predecirVideo
+from Otro.Conexion.Conexion import conectar_bd
 
 conexion = conectar_bd()
 
@@ -32,7 +32,7 @@ def interfazInicioSesion():
 
     # Logo
     try:
-        logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png"))
+        logo = Image.open(os.path.join(ruta_script, "..", "..", "..",  "Imagenes", "logoWorkout.png"))
         logo_img = ImageTk.PhotoImage(logo)
         lbl_logo = tk.Label(frame_form, image=logo_img, bg="#ffffff", borderwidth=0)
         lbl_logo.image = logo_img

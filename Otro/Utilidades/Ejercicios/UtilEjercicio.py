@@ -1,5 +1,5 @@
 from collections import Counter
-from EvaluarEjericios import *
+from Otro.Utilidades.Ejercicios.EvaluarEjericios import *
 import cv2
 
 def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura,zonaError, frame_rgb):

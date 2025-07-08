@@ -6,7 +6,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog  
 from collections import defaultdict
-from EntrenarModelo import main as entrenar_modelo
+from Otro.Modelo.EntrenarModelo import main as entrenar_modelo
 
 mp_pose = mp.solutions.pose
 

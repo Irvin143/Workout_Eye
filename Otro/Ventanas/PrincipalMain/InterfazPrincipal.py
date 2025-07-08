@@ -2,15 +2,17 @@ import threading
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # '0' = all logs, '1' = filter INFO, '2' = filter WARNING, '3' = only ERROR
-from Conexion import conectar_bd
+from Otro.Conexion.Conexion import conectar_bd
 from keras.models import load_model
 import pickle
-from Proyecto import main as entrenarIA
-from VentanasSecundarias import interfazInicioSesion, interfaz_mostrar_estadisticas, interfaz_mostrar_notificaciones, interfaz_subir_video
-from Utilidades import  centrar_ventana, cargar_credenciales
-from UtilCamaras import cargarCamara, cargarInterfazCamaras
+from Otro.Utilidades.Ejercicios.Proyecto import main as entrenarIA
+from Otro.Ventanas.Secundarias.VentanasSecundarias import interfazInicioSesion, interfaz_mostrar_estadisticas, interfaz_mostrar_notificaciones, interfaz_subir_video
+from Otro.Utilidades.Utilidades import  centrar_ventana, cargar_credenciales
+from Otro.Utilidades.UtilCamaras import cargarCamara, cargarInterfazCamaras
 
 # Variables globales
 model = None
@@ -53,8 +55,7 @@ def interfazInicial():
     frameSesion.columnconfigure(1, weight=1)
     frameSesion.columnconfigure(2, weight=1)
     frameSesion.grid(row=0, column=0, columnspan=3,sticky="nsew", padx=20, pady=20)
-
-    imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "loginWorkout.png"))
+    imagen = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "loginWorkout.png"))
     imagen_tk_login = ImageTk.PhotoImage(imagen)
     btn_fotoSesion = ctk.CTkButton(frameSesion, image=imagen_tk_login, 
                                     text="", width=40, height=40,
@@ -69,7 +70,7 @@ def interfazInicial():
     lbl_datosSesion = ctk.CTkLabel(frameSesion, text=f"Hola, {nombreUsuario} ", font=("Arial", 14, "bold"), fg_color="#c4d2f4", text_color="#393E46")
     lbl_datosSesion.grid(row=0, column=0, padx = (65,0),pady=10, sticky="w")
 
-    imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "campanaWorkout.png"))
+    imagen = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "campanaWorkout.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
     btn_notificaciones = ctk.CTkButton(frameSesion,image=imagen_tk,text="",corner_radius=20,width=30,fg_color="#9eb8f9",command=lambda: interfaz_mostrar_notificaciones())
     btn_notificaciones.grid(row=0, column=2, padx=10, pady=10, sticky="e")
@@ -81,8 +82,8 @@ def interfazInicial():
     #frameLogo.grid_propagate(False)
     frameLogo.grid(row=1, column=0,columnspan=3, sticky="nsew", padx=20, pady=20)
 
-    fondo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "fondoWorkout.png")).convert("RGBA")
-    logo = Image.open(os.path.join(ruta_script, "..", "Imagenes", "logoWorkout.png")).convert("RGBA")
+    fondo = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "fondoWorkout.png")).convert("RGBA")
+    logo = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "logoWorkout.png")).convert("RGBA")
 
     x = (fondo.width - logo.width) // 2
     y = (fondo.height - logo.height) // 2
@@ -105,7 +106,7 @@ def interfazInicial():
     lbl_timer = tk.Label(frameTimer, text="Tiempo", font=("Arial", 14, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_timer.grid(row=0, column=0, padx = 30,pady=(20,30),sticky="w")
 
-    imagen = Image.open(os.path.join(ruta_script, "..", "Imagenes", "pngwing.com.png"))
+    imagen = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "pngwing.com.png"))
     imagen_tk = ImageTk.PhotoImage(imagen)
     lbl_imagen = tk.Label(frameTimer, image=imagen_tk, bg="#c4d2f4",height=20, width=20,)
     lbl_imagen.image = imagen_tk  # Mantener una referencia a la imagen
@@ -114,7 +115,7 @@ def interfazInicial():
     lbl_fecha = tk.Label(frameTimer, text= mostrar_fecha(), font=("Arial", 12, "bold"), bg="#c4d2f4", fg="#393E46")
     lbl_fecha.grid(row=1, column=0, padx = 30,pady=20,sticky="w")
 
-    imgaenCalendario = Image.open(os.path.join(ruta_script, "..", "Imagenes", "calendarioWorkout.png"))
+    imgaenCalendario = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "calendarioWorkout.png"))
     imagen_tkCalendario = ImageTk.PhotoImage(imgaenCalendario)
     lbl_imagenCalendario = tk.Label(frameTimer, image=imagen_tkCalendario, bg="#c4d2f4",height=20, width=20)
     lbl_imagenCalendario.image = imagen_tkCalendario  # Mantener una referencia a la imagen
@@ -139,7 +140,7 @@ def interfazInicial():
     btn_estadisticas.grid(row = 0,column = 0,padx = 10,pady = (10,0))
     btn_estadisticas.configure(command = lambda: interfaz_mostrar_estadisticas(usuarioID))
 
-    imagen_estadisticas = Image.open(os.path.join(ruta_script, "..", "Imagenes", "estadisticasWorkout.png"))
+    imagen_estadisticas = Image.open(os.path.join(ruta_script, "..", "..", "..", "Imagenes", "estadisticasWorkout.png"))
     imagen_tk_estadisticas = ImageTk.PhotoImage(imagen_estadisticas)
     lbl_imagen_estadisticas = ctk.CTkLabel(frameEstadisticas, image=imagen_tk_estadisticas, text="")
     lbl_imagen_estadisticas.image = imagen_tk_estadisticas  # Mantener una referencia a la imagen
@@ -175,7 +176,7 @@ def interfazInicial():
     height=75
     )   
     btn_camara.grid(row=2, column=2, padx=10, pady=10)
-    btn_camara.configure(command = lambda: cargarCamara(btn_camara,ventanaInicial,btn_camara,conexion, usuarioID,opcion,lbl_txtSeleccion))
+    btn_camara.configure(command = lambda: cargarCamara(btn_camara,ventanaInicial,btn_camara,conexion, usuarioID,opcion,lbl_txtSeleccion, model, le))  # Llama a la función cargarCamara al hacer clic
     threading.Thread(target=cargarInterfazCamaras(btn_camara,ventanaInicial,frameCamaras,opcion)).start() 
 
     # Botón Entrenar Modelo (centro)

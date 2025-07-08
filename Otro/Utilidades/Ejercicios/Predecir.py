@@ -2,7 +2,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from collections import Counter
-from Utilidades import convertir_landmarks_a_diccionario
+from Otro.Utilidades.Utilidades import convertir_landmarks_a_diccionario
+
 mp_pose = mp.solutions.pose
 
 

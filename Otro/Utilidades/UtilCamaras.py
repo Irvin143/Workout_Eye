@@ -4,10 +4,10 @@ import cv2
 import mediapipe as mp
 import tkinter as tk
 from PIL import Image, ImageTk
-from UtilEjercicio import evaluarEjercicio,predecir_ejercicio
-from EvaluarEjericios import evaluar_sentadilla, evaluar_curl_biceps, evaluar_pullup
-from Utilidades import convertir_landmarks_a_diccionario, detener_animacion, animar_texto
-from Conexion import actualizar_estadisticas
+from Otro.Utilidades.Ejercicios.UtilEjercicio import evaluarEjercicio,predecir_ejercicio
+from Otro.Utilidades.Ejercicios.EvaluarEjericios import evaluar_sentadilla, evaluar_curl_biceps, evaluar_pullup
+from Otro.Utilidades.Utilidades import convertir_landmarks_a_diccionario, detener_animacion, animar_texto
+from Otro.Conexion.Conexion import actualizar_estadisticas
 import customtkinter as ctk
 
 def detectar_camaras():
@@ -23,7 +23,7 @@ def detectar_camaras():
 
     return camaras_disponibles
 
-def mostrar_camara( btn_camara,conexion, usuarioID,opcion):
+def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
     global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo,estadisticas
     keypoints_cuerpo = []
     repeticiones = 0
@@ -56,7 +56,7 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion):
     detener_animacion(btn_camara)
 
     def actualizar_frame():
-        global nombre_ejercicio, zonaError, repeticiones, lbl_repeticiones, keypoints_cuerpo, estadisticas
+        global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo, estadisticas
         ventana_tamaño = 100  # Tamaño de la ventana de frames
         ret, frame = cap.read()
         if not ret:
@@ -82,7 +82,7 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion):
             if len(keypoints) == ventana_tamaño:
                 zonaError = []
                 repeticionesAux = 0
-                nombre_ejercicio = predecir_ejercicio(keypoints)
+                nombre_ejercicio = predecir_ejercicio(keypoints, model , le)
                 match nombre_ejercicio:
                     case "squat":
                         zonaError, repeticionesAux = evaluar_sentadilla(keypoints_cuerpo)
@@ -93,7 +93,6 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion):
                     case _:
                         zonaError = []
                 repeticiones += repeticionesAux
-                lbl_repeticiones.configure(text=f"Repeticiones: {repeticiones}")
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
                 # Actualizar la lista de estadísticas
                 # Buscar si ya existe el ejercicio en la lista
@@ -141,10 +140,10 @@ def cargarInterfazCamaras(btn,ventanaInicial,frameCamaras, opcion):
     threading.Thread(target=cargar_camaras).start()
 
 
-def cargarCamara(btn,ventanaInicial,btn_camara,conexion, usuarioID,opcion,lbl_txtSeleccion):
+def cargarCamara(btn,ventanaInicial,btn_camara,conexion, usuarioID,opcion,lbl_txtSeleccion,model, le):
     if opcion.get() == "":
         lbl_txtSeleccion.configure(text_color = "#ff0000")
     else:
         lbl_txtSeleccion.configure(text_color = "#393E46")
         animar_texto(btn,ventanaInicial)
-        threading.Thread(target=mostrar_camara, args=(btn_camara, conexion, usuarioID, opcion)).start()
+        threading.Thread(target=mostrar_camara, args=(btn_camara, conexion, usuarioID, opcion, model, le)).start()
