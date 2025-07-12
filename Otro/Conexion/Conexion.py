@@ -32,7 +32,7 @@ def consultarUsuario(conexion,usuarioId,password):
         print("❌ Error al consultar nombre de usuario:", e)
         return None
 
-def grabarUsuario(conexion, nombre, contrasena, genero, edad):
+def grabarUsuario(conexion, nombre, contrasena, genero = 'M', edad = 18):
     try:
         cursor = conexion.cursor()
         # Si usuarioId es None, pásalo como None para el OUTPUT
