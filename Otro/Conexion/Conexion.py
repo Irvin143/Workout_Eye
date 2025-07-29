@@ -32,10 +32,18 @@ def consultarUsuario(conexion,usuarioId,password):
         print("❌ Error al consultar nombre de usuario:", e)
         return None
 
-def grabarUsuario(conexion, nombre, contrasena, genero = 'M', edad = 18):
+def grabarUsuario(conexion, nombre, contrasena, genero='M', edad=18):
     try:
         cursor = conexion.cursor()
-        # Si usuarioId es None, pásalo como None para el OUTPUT
+        # Verificar si el usuario ya existe
+        cursor.execute("""
+            SELECT UsuarioID FROM Usuarios WHERE Nombre = ?
+        """, (nombre,))
+        fila = cursor.fetchone()
+        if fila:
+            print("ℹ️ El usuario ya existe con ID:", fila[0])
+            return fila[0]
+        # Si no existe, lo inserta
         cursor.execute("""
             DECLARE @usuarioID INT;
             EXEC sp_grabar_usuario @UsuarioID = @usuarioID OUTPUT, @Nombre=?, @Contrasena=?, @Genero=?, @Edad=?;

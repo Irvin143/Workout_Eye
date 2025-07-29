@@ -16,20 +16,21 @@ mp_pose = mp.solutions.pose
 
 model = None
 le = None
+conexion = None
 
 @app.on_event("startup")
 def cargar_modelo():
-    global model, le
+    global model, le, conexion
     print("Cargando modelo y etiquetas...")
     model = load_model("datos/modelo_ejercicios.h5")
     with open("datos/labels.pkl", "rb") as f:
         le = pickle.load(f)
     print("Modelo y etiquetas cargados.")
+    conexion = conectar_bd()
 
 @app.get("/estadisticas/{usuarioID}")
 async def obtener_estadisticas(usuarioID: int):
     try:
-        conexion = conectar_bd()
         if not conexion:
             raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
         
@@ -42,10 +43,7 @@ async def obtener_estadisticas(usuarioID: int):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
-    
-    finally:
-        if conexion:
-            conexion.close()
+
 
             
 @app.post("/grabarUsuario")
@@ -68,10 +66,7 @@ async def grabar_usuario(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
-    
-    finally:
-        if conexion:
-            conexion.close()
+
 
 
 @app.post("/keypoints")
