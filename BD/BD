@@ -1,7 +1,7 @@
 -- Crear la base de datos (opcional)
 CREATE DATABASE WorkoutEyeDB;
 GO
-
+SELECT * from usuarios
 -- Usar la base de datos
 USE WorkoutEyeDB;
 GO
@@ -113,8 +113,11 @@ BEGIN
 END
 go
 
+select * from usuarios
+
 -- Consulta: UsuarioID y Repeticiones usando INNER JOIN
 SELECT u.UsuarioID, ee.Repeticiones,e.Nombre,e.EjercicioID
 FROM Usuarios u
 INNER JOIN EstadisticasEjercicio ee ON u.UsuarioID = ee.UsuarioID
-inner join Ejercicios e on e.EjercicioID = ee.EjercicioID
+inner join Ejercicios e on e.EjercicioID = ee.EjercicioID   
+

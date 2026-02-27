@@ -9,7 +9,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from Otro.Conexion.Conexion import conectar_bd
 from keras.models import load_model
 import pickle
-from Otro.Utilidades.Ejercicios.Proyecto import main as entrenarIA
+from Otro.Utilidades.Ejercicios.SubirVideos import main as entrenarIA
+#from Otro.Utilidades.Ejercicios.Proyecto import main as entrenarIA
 from Otro.Ventanas.Secundarias.VentanasSecundarias import interfazInicioSesion, interfaz_mostrar_estadisticas, interfaz_mostrar_notificaciones, interfaz_subir_video
 from Otro.Utilidades.Utilidades import centrar_ventana, cargar_credenciales
 from Otro.Utilidades.UtilCamaras import cargarCamara, cargarInterfazCamaras

@@ -24,7 +24,7 @@ def evaluarEjercicio(nombreEjercicio, keypoints_cuerpo, landmarks, ancho, altura
         case "pull up":
             marcas_error_global = veredicto_pullup(keypoints_cuerpo, landmarks, ancho, altura,zonaError)
             marcar_error(marcas_error_global)
-
+"""   
 def predecir_ejercicio(keypoints,model, le):
     if len(keypoints) == 0:
         print("No se detectaron poses.")
@@ -48,4 +48,27 @@ def predecir_ejercicio(keypoints,model, le):
     clase_mayoritaria = Counter(clases_pred).most_common(1)[0][0]
     ejercicio = le.inverse_transform([clase_mayoritaria])[0]
 
+    return ejercicio
+"""
+
+def predecir_ejercicio(keypoints, model, le, scaler):
+    if len(keypoints) < 19:
+        return "sin_deteccion"
+
+    ventana = np.array(keypoints[-20:], dtype=np.float32)
+    X = ventana.reshape(1, -1)
+
+    # 🔥 CLAVE: escalar igual que en entrenamiento
+    X = scaler.transform(X)
+
+    preds = model.predict(X, verbose=0)[0]
+    clase_idx = np.argmax(preds)
+    confianza = preds[clase_idx]
+
+    print(f"Confianza: {confianza:.2f}")
+
+    if confianza < 0.6:
+        return "sin_deteccion"
+
+    ejercicio = le.inverse_transform([clase_idx])[0]
     return ejercicio

@@ -9,6 +9,7 @@ from Otro.Utilidades.Ejercicios.EvaluarEjericios import evaluar_sentadilla, eval
 from Otro.Utilidades.Utilidades import convertir_landmarks_a_diccionario, detener_animacion, animar_texto
 from Otro.Conexion.Conexion import actualizar_estadisticas
 import customtkinter as ctk
+import requests
 
 def detectar_camaras():
     camaras_disponibles = []
@@ -24,7 +25,8 @@ def detectar_camaras():
     return camaras_disponibles
 
 def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
-    global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo,estadisticas
+    global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo,estadisticas,noFrame
+    noFrame = 0
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []  # Lista para almacenar las zonas de error
@@ -54,35 +56,56 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
     btn_cerrar.pack(pady=10)
 
     detener_animacion(btn_camara)
-
+    frames_list = []
+    
     def actualizar_frame():
-        global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo, estadisticas
-        ventana_tamaño = 100  # Tamaño de la ventana de frames
+        global nombre_ejercicio, zonaError, repeticiones, keypoints_cuerpo, estadisticas, noFrame
+        ventana_tamaño = 100
         ret, frame = cap.read()
         if not ret:
             ventana_camara.after(10, actualizar_frame)
             return
 
+        
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
         if results.pose_landmarks:
+            noFrame += 1
             altura, ancho, _ = frame.shape
-            landmarks = results.pose_landmarks.landmark
             puntos = []
+            landmarks = results.pose_landmarks.landmark
+            
+            frames_list.append(frame)  # Guardar frame en la lista
+            
             for lm in results.pose_landmarks.landmark:
                 puntos.extend([lm.x, lm.y, lm.z])
 
             keyCuerpo = convertir_landmarks_a_diccionario(results)
             keypoints_cuerpo.append(keyCuerpo)
             keypoints.append(puntos)
+            print("Frame numero;", noFrame)
+            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError, frame_rgb)
 
-            evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError,frame_rgb)
+            if len(keypoints) == 20:
+                files = []
+                for i, frame_img in enumerate(frames_list):
+                    _, buffer = cv2.imencode('.jpg', frame_img)
+                    files.append(('frames', (f'frame_{i}.jpg', buffer.tobytes(), 'image/jpeg')))
+                
+                requests.post("http://localhost:8000/keypoints", files=files, data={"ejercicio": nombre_ejercicio})
+                response = requests.post("http://localhost:8000/keypoints", files=files)
 
-            if len(keypoints) == ventana_tamaño:
+                data = response.json()  # ← aquí ya tienes el diccionario
+
+                print(data)
+                files.clear()  # Limpiar la lista de archivos después de enviar
+                frames_list.clear()  # Limpiar la lista de frames después de enviar
+                """
+                frames_list.clear()
                 zonaError = []
                 repeticionesAux = 0
-                nombre_ejercicio = predecir_ejercicio(keypoints, model , le)
+                nombre_ejercicio = predecir_ejercicio(keypoints, model, le)
                 match nombre_ejercicio:
                     case "squat":
                         zonaError, repeticionesAux = evaluar_sentadilla(keypoints_cuerpo)
@@ -94,8 +117,6 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
                         zonaError = []
                 repeticiones += repeticionesAux
                 print(f"Ejercicio detectado: {nombre_ejercicio}")
-                # Actualizar la lista de estadísticas
-                # Buscar si ya existe el ejercicio en la lista
                 encontrado = False
                 for est in estadisticas:
                     if est["nombre"] == nombre_ejercicio:
@@ -107,7 +128,7 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
 
                 keypoints.clear()
                 keypoints_cuerpo.clear()
-
+                """
         img = Image.fromarray(frame_rgb)
         imgtk = ImageTk.PhotoImage(image=img)
         lbl_video.imgtk = imgtk
