@@ -10,6 +10,7 @@ GO
 CREATE TABLE Usuarios (
     UsuarioID INT PRIMARY KEY IDENTITY(1,1),
     Nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) NOT NULL UNIQUE,
     contrasena VARCHAR(100) NOT NULL,
     Genero CHAR(1) CHECK (Genero IN ('M', 'F', 'O')),
     Edad INT CHECK (Edad >= 0),
@@ -86,6 +87,7 @@ GO
 CREATE OR ALTER PROC sp_grabar_usuario
     @UsuarioID INT OUTPUT,
     @Nombre VARCHAR(100),
+    @correo VARCHAR(100),
     @contrasena VARCHAR(100),
     @Genero CHAR(1),
     @Edad INT
@@ -99,7 +101,11 @@ BEGIN
         BEGIN
             RAISERROR('Ya existe un usuario con ese nombre', 16, 1);
         END
-
+        IF EXISTS (SELECT 1 FROM Usuarios WHERE correo = @correo)
+        BEGIN
+            RAISERROR('El correo ya esta registrado', 16, 1);
+        END
+        
         INSERT INTO Usuarios (Nombre, contrasena, Genero, Edad)
         VALUES (@Nombre, @contrasena, @Genero, @Edad);
 

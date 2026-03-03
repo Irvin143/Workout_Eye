@@ -98,7 +98,7 @@ def subir_video():
         if len(partes) < 3:
             print(f"⚠️ Nombre inválido: {ruta_video}. Usa: ejercicio_buena|mala_id.mp4")
             continue
-
+        
         ejercicio = partes[0]
         etiqueta = partes[1]
         

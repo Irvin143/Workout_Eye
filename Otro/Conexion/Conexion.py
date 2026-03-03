@@ -32,15 +32,15 @@ def consultarUsuario(conexion,usuarioId,password):
         print("❌ Error al consultar nombre de usuario:", e)
         return None
 
-def grabarUsuario(conexion, nombre, contrasena, genero = 'M', edad = 18):
+def grabarUsuario(conexion, nombre,correo, contrasena, genero = 'M', edad = 18):
     try:
         cursor = conexion.cursor()
         # Si usuarioId es None, pásalo como None para el OUTPUT
         cursor.execute("""
             DECLARE @usuarioID INT;
-            EXEC sp_grabar_usuario @UsuarioID = @usuarioID OUTPUT, @Nombre=?, @Contrasena=?, @Genero=?, @Edad=?;
+            EXEC sp_grabar_usuario @UsuarioID = @usuarioID OUTPUT, @Nombre=?,@correo =?, @Contrasena=?, @Genero=?, @Edad=?;
             SELECT @usuarioID;
-        """, (nombre, contrasena, genero, edad))
+        """, (nombre, contrasena,correo, genero, edad))
         last_id = cursor.fetchone()[0]
         conexion.commit()
         print("✅ Usuario insertado correctamente con ID:", last_id)

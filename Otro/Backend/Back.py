@@ -64,6 +64,7 @@ async def obtener_estadisticas(usuarioID: int):
 @app.post("/grabarUsuario")
 async def grabar_usuario(
     nombre: str = Form(...),
+    correo: str = Form(...),
     contrasena: str = Form(...),
     genero: str = Form(...),
     edad: int = Form(...)
@@ -74,7 +75,7 @@ async def grabar_usuario(
             raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
         
         # Llamar a la función grabarUsuario de tu módulo de conexión
-        usuario_id = grabarUsuario(conexion, nombre, contrasena, genero, edad)
+        usuario_id = grabarUsuario(conexion, nombre,correo, contrasena, genero, edad)
         
         if usuario_id is None:
             raise HTTPException(status_code=400, detail="Error al crear el usuario. Posiblemente el nombre ya existe")
