@@ -66,7 +66,7 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
             ventana_camara.after(10, actualizar_frame)
             return
 
-        
+        print("Procesando frame...")
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = pose.process(frame_rgb)
 
@@ -87,20 +87,32 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
             print("Frame numero;", noFrame)
             evaluarEjercicio(nombre_ejercicio, keypoints_cuerpo, landmarks, ancho, altura, zonaError, frame_rgb)
 
-            if len(keypoints) == 20:
+            if noFrame == 20:
                 files = []
                 for i, frame_img in enumerate(frames_list):
                     _, buffer = cv2.imencode('.jpg', frame_img)
                     files.append(('frames', (f'frame_{i}.jpg', buffer.tobytes(), 'image/jpeg')))
+                print("Enviando frames al backend...")
+
+                def enviar_frames(files):
+                    response = requests.post(
+                        "http://localhost:8000/keypoints",
+                        files=files,
+                        data={"ejercicio": nombre_ejercicio}
+                    )
+
+                    data = response.json()
+
+                    print("Respuesta del backend:", data)
+                    
+                files_to_send = files.copy()
+
+                threading.Thread(target=enviar_frames, args=(files_to_send,)).start()
                 
-                requests.post("http://localhost:8000/keypoints", files=files, data={"ejercicio": nombre_ejercicio})
-                response = requests.post("http://localhost:8000/keypoints", files=files)
-
-                data = response.json()  # ← aquí ya tienes el diccionario
-
-                print(data)
+                
                 files.clear()  # Limpiar la lista de archivos después de enviar
                 frames_list.clear()  # Limpiar la lista de frames después de enviar
+                noFrame = 0
                 """
                 frames_list.clear()
                 zonaError = []
@@ -134,6 +146,7 @@ def mostrar_camara( btn_camara,conexion, usuarioID,opcion,model, le):
         lbl_video.imgtk = imgtk
         lbl_video.configure(image=imgtk)
         ventana_camara.after(10, actualizar_frame)
+
 
     actualizar_frame()
 

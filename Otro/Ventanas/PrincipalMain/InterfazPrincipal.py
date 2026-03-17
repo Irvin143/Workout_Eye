@@ -180,7 +180,7 @@ class VentanaPrincipal(ctk.CTk):
             text_color="white",
             width=250,
             height=75,
-            command=lambda: threading.Thread(target=interfaz_subir_video(self.model, self.le, self.modelo_listo)).start()
+            command=lambda: threading.Thread(target=interfaz_subir_video(self.model, self.le)).start()
         )
         btn_predecir_video.grid(row=2, column=1, pady=10)
 

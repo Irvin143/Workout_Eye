@@ -8,7 +8,7 @@ import os
 from PIL import Image, ImageTk
 from Otro.Utilidades.Utilidades import guardar_credenciales, centrar_ventana, animar_texto, detener_animacion
 from Otro.Conexion.Conexion import consultar_estadisticas, grabarUsuario
-from Otro.Utilidades.Ejercicios.Predecir import predecirVideo
+from Otro.Utilidades.Ejercicios.Predecir import procesar_archivo_video
 from Otro.Conexion.Conexion import conectar_bd
 
 conexion = conectar_bd()
@@ -300,7 +300,7 @@ def interfaz_mostrar_notificaciones():
 
 
 # Interfaz para subir video y detectar ejercicio
-def interfaz_subir_video(model,le,modelo_listo):
+def interfaz_subir_video(model,le,modelo_listo = True):
     def procesar_video(ruta_video,btn,ventana):
         ejercicio = "Desconocido"
         if not modelo_listo:
@@ -308,7 +308,7 @@ def interfaz_subir_video(model,le,modelo_listo):
             return
         try:
             animar_texto(btn,ventana)
-            ejercicio = predecirVideo(model, le, ruta_video)
+            ejercicio = procesar_archivo_video(ruta_video)
             lbl_resultado.configure(text=f"Ejercicio detectado: {ejercicio}", text_color="#00ADB5")
             detener_animacion(btn)
         except Exception as e:

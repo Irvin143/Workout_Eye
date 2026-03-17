@@ -17,9 +17,11 @@ mp_pose = mp.solutions.pose
 model = None
 le = None
 scaler = None
+pose = mp_pose.Pose(static_image_mode=True) 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     global model, le, scaler
     print("Cargando modelo, etiquetas y scaler...")
 
@@ -89,57 +91,62 @@ async def grabar_usuario(
         if conexion:
             conexion.close()
 
-
 @app.post("/keypoints")
 async def detectar_keypoints(
     frames: List[UploadFile] = File(...)
 ):
+
     keypoints = []
     keypoints_cuerpo = []
     repeticiones = 0
     zonaError = []
     nombre_ejercicio = "Desconocido"
 
-    with mp_pose.Pose(static_image_mode=True) as pose:
-        for file in frames:
-            contents = await file.read()
-            nparr = np.frombuffer(contents, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    for file in frames:
 
-            if img is None:
-                continue
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-            results = pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            if not results.pose_landmarks:
-                continue
+        if img is None:
+            continue
 
-            puntos = []
-            for lm in results.pose_landmarks.landmark:
-                puntos.extend([lm.x, lm.y, lm.z])
-            keypoints.append(puntos)
+        results = pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-            keyCuerpo = convertir_landmarks_a_diccionario(results)
-            keypoints_cuerpo.append(keyCuerpo)
+        if not results.pose_landmarks:
+            continue
 
+        puntos = []
+        for lm in results.pose_landmarks.landmark:
+            puntos.extend([lm.x, lm.y, lm.z])
+
+        keypoints.append(puntos)
+
+        keyCuerpo = convertir_landmarks_a_diccionario(results)
+        keypoints_cuerpo.append(keyCuerpo)
+        
     if keypoints:
+        print("Realizando predicción del ejercicio...")
         clase = predecir_ejercicio(keypoints, model, le, scaler)
-
         if clase == "sin_deteccion":
             nombre_ejercicio = "sin_deteccion"
             tecnica = "desconocido"
         else:
-            nombre_ejercicio, tecnica = clase.split("_")
-            
+            nombre_ejercicio, _ = clase.split("_")
+
         match nombre_ejercicio:
+
             case "squat":
                 zonaError, repeticiones = evaluar_sentadilla(keypoints_cuerpo)
+
             case "barbell biceps curl":
                 zonaError, repeticiones = evaluar_curl_biceps(keypoints_cuerpo)
+
             case "pull up":
                 zonaError, repeticiones = evaluar_pullup(keypoints_cuerpo)
+
             case _:
                 zonaError = []
-
     return {
         "NombreEjercicio": nombre_ejercicio,
         "Repeticiones": repeticiones,
